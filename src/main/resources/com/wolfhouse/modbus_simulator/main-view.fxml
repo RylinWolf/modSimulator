@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.wolfhouse.modbus_simulator.MainController"
+            prefHeight="720.0" prefWidth="1100.0"
+            stylesheets="@style.css"
+            styleClass="main-container">
+    <left>
+        <VBox spacing="10" styleClass="sidebar" prefWidth="240">
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <padding>
+                    <Insets left="16" bottom="32"/>
+                </padding>
+                <FontIcon iconLiteral="mdi2l-lan" iconSize="28" styleClass="accent-icon"/>
+                <Label text="MODBUS" styleClass="sidebar-title"/>
+            </HBox>
+            
+            <ToggleButton text="TCP 模拟器" fx:id="tcpBtn" onAction="#showTcpView"
+                    maxWidth="Infinity" styleClass="nav-button" selected="true">
+                <graphic>
+                    <FontIcon iconLiteral="mdi2e-ethernet"/>
+                </graphic>
+                <toggleGroup>
+                    <ToggleGroup fx:id="navGroup"/>
+                </toggleGroup>
+            </ToggleButton>
+            
+            <ToggleButton text="RTU 模拟器" fx:id="rtuBtn" onAction="#showRtuView"
+                    maxWidth="Infinity" styleClass="nav-button" toggleGroup="$navGroup">
+                <graphic>
+                    <FontIcon iconLiteral="mdi2u-usb-port"/>
+                </graphic>
+            </ToggleButton>
+            
+            <Region VBox.vgrow="ALWAYS"/>
+            
+            <Separator prefWidth="Infinity">
+                <padding>
+                    <Insets bottom="10" top="10"/>
+                </padding>
+            </Separator>
+
+            <HBox spacing="10" alignment="CENTER">
+                <Button fx:id="themeBtn" onAction="#toggleTheme" styleClass="button-circle, flat">
+                    <tooltip><Tooltip text="切换主题"/></tooltip>
+                </Button>
+            </HBox>
+        </VBox>
+    </left>
+    <center>
+        <StackPane fx:id="contentArea" styleClass="content-area">
+            <!-- Content will be loaded here -->
+        </StackPane>
+    </center>
+</BorderPane>

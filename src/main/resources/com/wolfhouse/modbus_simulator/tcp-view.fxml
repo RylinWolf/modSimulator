@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<VBox spacing="0" xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.wolfhouse.modbus_simulator.TcpSimulatorController"
+      stylesheets="@style.css">
+
+    <VBox spacing="20" styleClass="header-panel">
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <VBox>
+                <Label text="TCP 模拟器" styleClass="header-title"/>
+                <Label text="管理并启动 Modbus TCP 模拟设备" styleClass="text-muted"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS"/>
+            <HBox spacing="10" styleClass="toolbar">
+                <Button text="批量启动" onAction="#handleBatchStart" styleClass="button-outlined, success">
+                    <graphic><FontIcon iconLiteral="mdi2p-play"/></graphic>
+                </Button>
+                <Button text="批量停止" onAction="#handleBatchStop" styleClass="button-outlined, danger">
+                    <graphic><FontIcon iconLiteral="mdi2s-stop"/></graphic>
+                </Button>
+                <Button text="批量删除" onAction="#handleBatchDelete" styleClass="button-outlined, danger">
+                    <graphic><FontIcon iconLiteral="mdi2t-trash-can-outline"/></graphic>
+                </Button>
+                <Separator orientation="VERTICAL"/>
+                <Button text="添加设备" onAction="#handleAddDevice" styleClass="accent">
+                    <graphic><FontIcon iconLiteral="mdi2p-plus"/></graphic>
+                </Button>
+            </HBox>
+        </HBox>
+    </VBox>
+
+    <TableView fx:id="deviceTable" VBox.vgrow="ALWAYS" styleClass="edge-to-edge">
+        <columns>
+            <TableColumn fx:id="nameColumn" text="名称" prefWidth="180"/>
+            <TableColumn fx:id="portColumn" text="端口" prefWidth="100"/>
+            <TableColumn fx:id="statusColumn" text="状态" prefWidth="120"/>
+            <TableColumn fx:id="actionsColumn" text="操作" prefWidth="480"/>
+        </columns>
+        <columnResizePolicy>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+        </columnResizePolicy>
+    </TableView>
+</VBox>
