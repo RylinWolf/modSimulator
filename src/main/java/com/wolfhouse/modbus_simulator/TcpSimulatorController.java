@@ -18,8 +18,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -179,7 +178,7 @@ public class TcpSimulatorController {
     }
 
     @FXML
-    public void handleImportConf() {
+    private void handleImportConf() {
         Stage stage = new Stage();
         FileChooser chooser = FileService.loadFile("导入配置文件",
                                                    "modbus 配置文件",
@@ -190,22 +189,54 @@ public class TcpSimulatorController {
             return;
         }
         for (File file : files) {
-            System.out.println(file.getAbsoluteFile());
+            System.out.printf("导入配置文件: %s%n", file.getAbsoluteFile());
         }
     }
 
     @FXML
-    public void handleExportConf() {
+    private void handleExportConf() {
         FileChooser chooser = FileService.saveFile("导出配置文件",
                                                    "devices-%s".formatted(System.currentTimeMillis()),
                                                    "Modbus 配置文件", List.of("*.mof"));
         File file = chooser.showSaveDialog(new Stage());
+        if (file == null) {
+            return;
+        }
+        System.out.printf("导出配置文件: %s%n", file.getAbsolutePath());
+        exportConf(file);
+    }
 
-        System.out.println(file);
+    private void exportConf(File file) {
+        try {
+            if (!file.createNewFile()) {
+                throw new IOException("无法创建新文件");
+            }
+        } catch (IOException e) {
+            WindowUtil.showError("文件创建失败", e);
+            return;
+        }
+        if (!file.canWrite() && !file.setWritable(true)) {
+            WindowUtil.showError("文件无写入权限");
+            return;
+        }
+
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            new ObjectOutputStream(fos).writeObject(devices.stream().toList());
+        } catch (FileNotFoundException e) {
+            WindowUtil.showError("文件不存在", e);
+            return;
+        } catch (IOException e) {
+            WindowUtil.showError("文件写入失败", e);
+            return;
+        }
+
+        WindowUtil.showAlert(Alert.AlertType.INFORMATION, "导出成功", "文件导出成功",
+                             "", baseStage, ButtonType.OK);
+
     }
 
     private void setupActionsColumn() {
-        actionsColumn.setCellFactory(param -> new TableCell<>() {
+        actionsColumn.setCellFactory(_ -> new TableCell<>() {
             private final Button startStopBtn = new Button();
             private final Button addRespBtn   = new Button("响应");
             private final Button editBtn      = new Button("编辑");
