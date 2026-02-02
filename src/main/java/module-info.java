@@ -10,9 +10,8 @@ module com.wolfhouse.modbus_simulator {
     requires atlantafx.base;
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.ikonli.materialdesign2;
+    requires mod4j;
 
     opens com.wolfhouse.modbus_simulator to javafx.fxml;
-    opens com.wolfhouse.mod4j.utils to javafx.base;
     exports com.wolfhouse.modbus_simulator;
-    exports com.wolfhouse.mod4j.utils;
 }

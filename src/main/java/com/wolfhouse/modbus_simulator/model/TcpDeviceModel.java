@@ -26,14 +26,18 @@ public class TcpDeviceModel {
             return;
         }
         if (javafx.application.Platform.isFxApplicationThread()) {
-            if (this.logs.get() == null) return;
+            if (this.logs.get() == null) {
+                return;
+            }
             this.logs.set(this.logs.get() + log + "\n");
         } else {
             javafx.application.Platform.runLater(() -> {
                 if (com.wolfhouse.modbus_simulator.DeviceManager.getInstance().isShuttingDown()) {
                     return;
                 }
-                if (this.logs.get() == null) return;
+                if (this.logs.get() == null) {
+                    return;
+                }
                 this.logs.set(this.logs.get() + log + "\n");
             });
         }

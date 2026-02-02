@@ -2,11 +2,9 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.geometry.Insets?>
-<?import org.kordamp.ikonli.javafx.FontIcon?>
-
-<VBox spacing="0" xmlns="http://javafx.com/javafx"
-      xmlns:fx="http://javafx.com/fxml"
+<?import org.kordamp.ikonli.javafx.*?>
+<VBox xmlns:fx="http://javafx.com/fxml" spacing="0"
+      xmlns="http://javafx.com/javafx"
       fx:controller="com.wolfhouse.modbus_simulator.TcpSimulatorController"
       stylesheets="@style.css">
 
@@ -19,18 +17,40 @@
             <Region HBox.hgrow="ALWAYS"/>
             <HBox spacing="10" styleClass="toolbar">
                 <Button text="批量启动" onAction="#handleBatchStart" styleClass="button-outlined, success">
-                    <graphic><FontIcon iconLiteral="mdi2p-play"/></graphic>
+                    <graphic>
+                        <FontIcon iconLiteral="mdi2p-play"/>
+                    </graphic>
                 </Button>
                 <Button text="批量停止" onAction="#handleBatchStop" styleClass="button-outlined, danger">
-                    <graphic><FontIcon iconLiteral="mdi2s-stop"/></graphic>
+                    <graphic>
+                        <FontIcon iconLiteral="mdi2s-stop"/>
+                    </graphic>
                 </Button>
                 <Button text="批量删除" onAction="#handleBatchDelete" styleClass="button-outlined, danger">
-                    <graphic><FontIcon iconLiteral="mdi2t-trash-can-outline"/></graphic>
+                    <graphic>
+                        <FontIcon iconLiteral="mdi2t-trash-can-outline"/>
+                    </graphic>
                 </Button>
                 <Separator orientation="VERTICAL"/>
-                <Button text="添加设备" onAction="#handleAddDevice" styleClass="accent">
-                    <graphic><FontIcon iconLiteral="mdi2p-plus"/></graphic>
-                </Button>
+                <VBox styleClass="conf-box">
+                    <Button text="添加设备" onAction="#handleAddDevice" styleClass="accent">
+                        <graphic>
+                            <FontIcon iconLiteral="mdi2p-plus"/>
+                        </graphic>
+                    </Button>
+                    <HBox styleClass="conf-file-bar">
+                        <Button text="导入" onAction="#handleImportConf" styleClass="accent">
+                            <graphic>
+                                <FontIcon iconLiteral="mdi2d-download"/>
+                            </graphic>
+                        </Button>
+                        <Button text="导出" onAction="#handleExportConf" styleClass="accent">
+                            <graphic>
+                                <FontIcon iconLiteral="mdi2u-upload"/>
+                            </graphic>
+                        </Button>
+                    </HBox>
+                </VBox>
             </HBox>
         </HBox>
     </VBox>

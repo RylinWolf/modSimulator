@@ -76,6 +76,17 @@
     -fx-alignment: CENTER_LEFT;
 }
 
+.conf-box {
+    -fx-spacing: 12px;
+    -fx-alignment: TOP_CENTER;
+}
+
+.conf-file-bar {
+    -fx-spacing: 12px;
+    -fx-alignment: CENTER;
+}
+
+
 /* =================================================================*********
    Components (Tailwind-style)
    ========================================================================== */
@@ -86,7 +97,7 @@
     -fx-border-radius: 12px;
     -fx-background-radius: 12px;
     /* Subtle shadow simulation */
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 2);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 10, 0, 0, 2);
 }
 
 .table-view {

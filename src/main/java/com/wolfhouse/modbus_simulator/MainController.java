@@ -48,7 +48,9 @@ public class MainController {
     }
 
     private void setupGlobalShortcuts() {
-        if (contentArea.getScene() == null) return;
+        if (contentArea.getScene() == null) {
+            return;
+        }
         
         contentArea.getScene().setOnKeyPressed(event -> {
             // 兼容 Mac Cmd+W 和 Windows Alt+F4

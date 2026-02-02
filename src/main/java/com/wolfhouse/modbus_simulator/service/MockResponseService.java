@@ -1,0 +1,370 @@
+package com.wolfhouse.modbus_simulator.service;
+
+import com.wolfhouse.mod4j.utils.HexUtils;
+import com.wolfhouse.modbus_simulator.WindowUtil;
+import com.wolfhouse.modbus_simulator.model.MockResponseModel;
+import com.wolfhouse.modbus_simulator.model.TcpDeviceModel;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.CheckBoxTableCell;
+import javafx.scene.input.KeyCode;
+import javafx.scene.layout.*;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * 虚拟响应服务
+ *
+ * @author Rylin Wolf
+ */
+public class MockResponseService {
+    public static void showAddResponseDialog(TcpDeviceModel model, MockResponseModel existingResp) {
+        boolean isEdit = existingResp != null;
+        Stage   stage  = new Stage();
+        stage.initModality(Modality.APPLICATION_MODAL);
+        stage.setTitle(isEdit ? "编辑虚拟响应" : "添加虚拟响应");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(15);
+        grid.setVgap(15);
+        grid.setPadding(new Insets(30));
+
+        TextField nameField    = new TextField(isEdit ? existingResp.getName() : "");
+        TextField slaveIdField = new TextField(isEdit ? existingResp.getSlaveId() : "1");
+        TextField addrField    = new TextField(isEdit ? "0x" + Integer.toHexString(existingResp.getPair().registerAddr()) : "0");
+        TextField sizeField    = new TextField(isEdit ? String.valueOf(existingResp.getPair().dataSize()) : "2");
+        CheckBox  randCheckBox = new CheckBox("随机数据");
+        randCheckBox.setSelected(isEdit && existingResp.getPair().randData());
+        TextField dataField = new TextField();
+        if (isEdit && !existingResp.getPair().randData() && existingResp.getPair().data() != null) {
+            StringBuilder sb = new StringBuilder();
+            for (byte b : existingResp.getPair().data()) {
+                sb.append(String.format("%02x ", b));
+            }
+            dataField.setText(sb.toString().trim());
+        } else if (!isEdit) {
+            dataField.setText("00 01");
+        }
+        TextArea remarkArea = new TextArea(isEdit ? existingResp.getRemark() : "");
+        remarkArea.setPrefRowCount(2);
+
+        grid.add(new Label("名称:"), 0, 0);
+        grid.add(nameField, 1, 0);
+        grid.add(new Label("从机 ID:"), 0, 1);
+        grid.add(slaveIdField, 1, 1);
+        grid.add(new Label("地址 (十进制/0x十六进制):"), 0, 2);
+        grid.add(addrField, 1, 2);
+        grid.add(new Label("大小 (字节):"), 0, 3);
+        grid.add(sizeField, 1, 3);
+        grid.add(randCheckBox, 0, 4);
+        grid.add(new Label("固定数据 (十六进制):"), 0, 5);
+        grid.add(dataField, 1, 5);
+        grid.add(new Label("备注:"), 0, 6);
+        grid.add(remarkArea, 1, 6);
+
+        dataField.disableProperty().bind(randCheckBox.selectedProperty());
+
+        Button saveBtn = new Button("保存");
+        saveBtn.getStyleClass().add("success");
+        saveBtn.setPrefWidth(100);
+
+        Runnable saveTask = () -> {
+            try {
+                int     addr = HexUtils.parseInt(addrField.getText());
+                int     size = Integer.parseInt(sizeField.getText());
+                boolean rand = randCheckBox.isSelected();
+                byte[]  data = null;
+                if (!rand) {
+                    data = HexUtils.parseHexData(dataField.getText());
+                }
+
+                com.wolfhouse.mod4j.utils.ModbusTcpSimulator.MockRespPair pair = new com.wolfhouse.mod4j.utils.ModbusTcpSimulator.MockRespPair(addr, size, rand, data);
+                if (isEdit) {
+                    existingResp.setName(nameField.getText());
+                    existingResp.setSlaveId(slaveIdField.getText());
+                    existingResp.setPair(pair);
+                    existingResp.setRemark(remarkArea.getText());
+                    existingResp.setDataSize(sizeField.getText());
+                    existingResp.setDataType(rand ? "随机" : "固定");
+                    existingResp.setRegAddr(addrField.getText());
+                } else {
+                    MockResponseModel respModel = new MockResponseModel(slaveIdField.getText(), pair);
+                    respModel.setName(nameField.getText());
+                    respModel.setRemark(remarkArea.getText());
+                    model.getMockResponses().add(respModel);
+                    respModel.enabledProperty().addListener((obs, old, val) -> TcpSimulatorService.updateSimulatorResps(model, model.getSimulator()));
+                }
+
+                TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
+                stage.close();
+            } catch (Exception ex) {
+                WindowUtil.showError("输入无效: " + ex.getMessage());
+            }
+        };
+
+        saveBtn.setOnAction(e -> saveTask.run());
+
+        // 按下 Enter 保存，排除备注区域
+        grid.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER && !remarkArea.isFocused()) {
+                saveTask.run();
+                event.consume();
+            }
+        });
+
+        grid.add(saveBtn, 1, 7);
+
+        Scene scene = new Scene(grid);
+        WindowUtil.setupDialogCloseShortcuts(stage, scene);
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    public static void showResponseManagementDialog(TcpDeviceModel model) {
+        Stage stage = new Stage();
+        stage.initModality(Modality.APPLICATION_MODAL);
+        stage.setTitle("响应管理 - 端口 " + model.getPort());
+
+        VBox root = new VBox(0);
+        root.getStyleClass().add("dialog-root");
+        root.setPrefSize(900, 600);
+
+        boolean isRunning = "运行中".equals(model.getStatus());
+
+        VBox headerPanel = new VBox(16);
+        headerPanel.setPadding(new Insets(24));
+        headerPanel.getStyleClass().add("header-panel");
+
+        HBox topRow = new HBox(12);
+        topRow.setAlignment(Pos.CENTER_LEFT);
+
+        VBox  titleBox = new VBox(4);
+        Label title    = new Label("虚拟响应管理");
+        title.getStyleClass().add("header-title");
+        Label subTitle = new Label("配置端口 " + model.getPort() + " 的模拟数据响应");
+        subTitle.getStyleClass().add("text-muted");
+        titleBox.getChildren().addAll(title, subTitle);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        HBox toolbar = new HBox(10);
+        toolbar.setAlignment(Pos.CENTER_LEFT);
+
+        Button batchEnableBtn = new Button("启用");
+        batchEnableBtn.getStyleClass().addAll("button-outlined", "button-sm");
+        batchEnableBtn.setDisable(isRunning);
+
+        Button batchDisableBtn = new Button("停用");
+        batchDisableBtn.getStyleClass().addAll("button-outlined", "button-sm");
+        batchDisableBtn.setDisable(isRunning);
+
+        Button batchDelBtn = new Button("删除");
+        batchDelBtn.getStyleClass().addAll("button-outlined", "button-sm", "danger");
+        batchDelBtn.setDisable(isRunning);
+
+        Button addBtn = new Button("添加响应");
+        addBtn.getStyleClass().addAll("accent", "button-sm");
+        addBtn.setDisable(isRunning);
+        addBtn.setOnAction(e -> showAddResponseDialog(model, null));
+
+        toolbar.getChildren().addAll(batchEnableBtn, batchDisableBtn, batchDelBtn, new Separator(javafx.geometry.Orientation.VERTICAL), addBtn);
+        topRow.getChildren().addAll(titleBox, spacer, toolbar);
+        headerPanel.getChildren().add(topRow);
+
+        TableView<MockResponseModel> respTable = new TableView<>();
+        respTable.setItems(model.getMockResponses());
+        respTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        respTable.getStyleClass().add("edge-to-edge");
+        VBox.setVgrow(respTable, Priority.ALWAYS);
+
+        batchEnableBtn.setOnAction(e -> {
+            respTable.getSelectionModel().getSelectedItems().forEach(r -> r.setEnabled(true));
+            TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
+        });
+        batchDisableBtn.setOnAction(e -> {
+            respTable.getSelectionModel().getSelectedItems().forEach(r -> r.setEnabled(false));
+            TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
+        });
+        batchDelBtn.setOnAction(e -> {
+            List<MockResponseModel> selected = new ArrayList<>(respTable.getSelectionModel().getSelectedItems());
+            if (selected.isEmpty()) {
+                return;
+            }
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("确认批量删除");
+            alert.setHeaderText("确认删除选中的 " + selected.size() + " 个响应？");
+            if (alert.showAndWait().orElse(null) == ButtonType.OK) {
+                model.getMockResponses().removeAll(selected);
+                TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
+            }
+        });
+
+        setupResponseTableContextMenu(respTable, model);
+
+        // 双击编辑响应
+        respTable.setRowFactory(tv -> {
+            TableRow<MockResponseModel> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && (!row.isEmpty())) {
+                    if (!isRunning) {
+                        showAddResponseDialog(model, row.getItem());
+                        respTable.refresh();
+                    }
+                }
+            });
+            return row;
+        });
+
+        TableColumn<MockResponseModel, Boolean> enabledCol = new TableColumn<>("状态");
+        enabledCol.setPrefWidth(80);
+        enabledCol.setCellValueFactory(data -> data.getValue().enabledProperty());
+        enabledCol.setCellFactory(CheckBoxTableCell.forTableColumn(enabledCol));
+        enabledCol.setEditable(!isRunning);
+        respTable.setEditable(!isRunning);
+
+        TableColumn<MockResponseModel, String> nameCol = new TableColumn<>("名称");
+        nameCol.setPrefWidth(150);
+        nameCol.setCellValueFactory(data -> data.getValue().nameProperty());
+
+        TableColumn<MockResponseModel, String> slaveCol = new TableColumn<>("从机ID");
+        slaveCol.setPrefWidth(80);
+        slaveCol.setCellValueFactory(data -> data.getValue().slaveIdProperty());
+
+        TableColumn<MockResponseModel, String> addrCol = new TableColumn<>("寄存器地址");
+        addrCol.setPrefWidth(120);
+        addrCol.setCellValueFactory(data -> data.getValue().regAddrProperty());
+
+        TableColumn<MockResponseModel, String> sizeCol = new TableColumn<>("大小(Byte)");
+        sizeCol.setPrefWidth(80);
+        sizeCol.setCellValueFactory(data -> data.getValue().dataSizeProperty());
+
+        TableColumn<MockResponseModel, String> typeCol = new TableColumn<>("数据类型");
+        typeCol.setPrefWidth(100);
+        typeCol.setCellValueFactory(data -> data.getValue().dataTypeProperty());
+
+        TableColumn<MockResponseModel, Void> actionCol = new TableColumn<>("操作");
+        actionCol.setPrefWidth(150);
+        actionCol.setCellFactory(param -> new TableCell<>() {
+            private final Button editBtn = new Button("编辑");
+            private final Button delBtn  = new Button("删除");
+            private final HBox   pane    = new HBox(8, editBtn, delBtn);
+
+            {
+                pane.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                editBtn.getStyleClass().addAll("button-outlined", "button-sm");
+                delBtn.getStyleClass().addAll("button-outlined", "button-sm", "danger");
+
+                editBtn.setOnAction(e -> {
+                    MockResponseModel resp = getTableView().getItems().get(getIndex());
+                    showAddResponseDialog(model, resp);
+                });
+
+                delBtn.setOnAction(e -> {
+                    MockResponseModel resp = getTableView().getItems().get(getIndex());
+
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                    alert.setTitle("确认删除响应");
+                    alert.setHeaderText("确认删除该虚拟响应？");
+                    alert.setContentText("地址: " + resp.getPair().registerAddr());
+
+                    Optional<ButtonType> result = alert.showAndWait();
+                    if (result.isPresent() && result.get() == ButtonType.OK) {
+                        model.getMockResponses().remove(resp);
+                        TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
+                    }
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    editBtn.setDisable(isRunning);
+                    delBtn.setDisable(isRunning);
+                    setGraphic(pane);
+                }
+            }
+        });
+
+        respTable.getColumns().addAll(enabledCol, nameCol, slaveCol, addrCol, sizeCol, typeCol, actionCol);
+        root.getChildren().addAll(headerPanel, respTable);
+        respTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+
+        model.getMockResponses().forEach(r -> r.enabledProperty().addListener((obs, old, val) -> {
+            TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
+        }));
+
+        Scene scene = new Scene(root);
+        WindowUtil.setupDialogCloseShortcuts(stage, scene);
+        URL resource = MockResponseService.class.getResource("style.css");
+        if (resource != null) {
+            scene.getStylesheets().add(resource.toExternalForm());
+        }
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    public static void setupResponseTableContextMenu(TableView<MockResponseModel> respTable, TcpDeviceModel model) {
+        ContextMenu contextMenu = new ContextMenu();
+        boolean     isRunning   = "运行中".equals(model.getStatus());
+
+        MenuItem addMenu = new MenuItem("添加新响应");
+        addMenu.setOnAction(e -> showAddResponseDialog(model, null));
+        addMenu.setDisable(isRunning);
+
+        MenuItem enableMenu = new MenuItem("启用");
+        enableMenu.setOnAction(e -> {
+            respTable.getSelectionModel().getSelectedItems().forEach(r -> r.setEnabled(true));
+            TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
+        });
+
+        MenuItem disableMenu = new MenuItem("停用");
+        disableMenu.setOnAction(e -> {
+            respTable.getSelectionModel().getSelectedItems().forEach(r -> r.setEnabled(false));
+            TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
+        });
+
+        MenuItem editMenu = new MenuItem("编辑");
+        editMenu.setOnAction(e -> {
+            MockResponseModel selected = respTable.getSelectionModel().getSelectedItem();
+            if (selected != null) {
+                showAddResponseDialog(model, selected);
+                respTable.refresh();
+            }
+        });
+
+        MenuItem deleteMenu = new MenuItem("删除");
+        deleteMenu.getStyleClass().add("danger");
+        deleteMenu.setOnAction(e -> {
+            List<MockResponseModel> selected = new ArrayList<>(respTable.getSelectionModel().getSelectedItems());
+            model.getMockResponses().removeAll(selected);
+            TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
+        });
+
+        contextMenu.getItems().addAll(addMenu, new SeparatorMenuItem(), enableMenu, disableMenu, editMenu, new SeparatorMenuItem(), deleteMenu);
+        respTable.setContextMenu(contextMenu);
+
+        contextMenu.setOnShowing(e -> {
+            boolean hasSelection     = !respTable.getSelectionModel().getSelectedItems().isEmpty();
+            boolean singleSelection  = respTable.getSelectionModel().getSelectedItems().size() == 1;
+            boolean currentlyRunning = "运行中".equals(model.getStatus());
+
+            addMenu.setDisable(currentlyRunning);
+            enableMenu.setDisable(!hasSelection || currentlyRunning);
+            disableMenu.setDisable(!hasSelection || currentlyRunning);
+            editMenu.setDisable(!singleSelection || currentlyRunning);
+            deleteMenu.setDisable(!hasSelection || currentlyRunning);
+        });
+    }
+
+}
