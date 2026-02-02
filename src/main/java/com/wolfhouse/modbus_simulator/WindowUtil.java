@@ -3,6 +3,7 @@ package com.wolfhouse.modbus_simulator;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
 import javafx.scene.input.KeyCode;
@@ -25,6 +26,30 @@ public class WindowUtil {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    /**
+     * 显示一个提示框，支持根据窗口位置基准显示，提示框内容和类型可定制。
+     *
+     * @param type        提示框的类型，例如信息、警告、错误等
+     * @param title       提示框的标题文本
+     * @param headerText  提示框的头部内容文本
+     * @param contentText 提示框的主要内容文本
+     * @param based       用于定位提示框位置的基础窗口
+     * @return 返回一个包含用户交互结果的 {@code Optional<ButtonType>} 对象，例如用户点击的按钮信息
+     */
+    public static Optional<ButtonType> showAlert(Alert.AlertType type,
+                                                 String title,
+                                                 String headerText,
+                                                 String contentText,
+                                                 Stage based,
+                                                 ButtonType... buttons) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(headerText);
+        alert.setContentText(contentText);
+        alert.getButtonTypes().setAll(buttons);
+        return showWaitBased(based, alert);
     }
 
     public static void setupDialogCloseShortcuts(Stage stage, Scene scene) {

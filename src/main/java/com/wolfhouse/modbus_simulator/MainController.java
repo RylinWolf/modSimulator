@@ -7,7 +7,8 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
@@ -18,22 +19,17 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.materialdesign2.MaterialDesignW;
 
 import java.io.IOException;
-import java.util.Optional;
 
 public class MainController {
 
+    private final java.util.Map<String, Node> viewCache  = new java.util.HashMap<>();
     @FXML
-    private StackPane contentArea;
-    
+    private       StackPane                   contentArea;
     @FXML
-    private ToggleGroup navGroup;
-
+    private       ToggleGroup                 navGroup;
     @FXML
-    private Button themeBtn;
-
-    private boolean isDarkMode = true;
-
-    private final java.util.Map<String, Node> viewCache = new java.util.HashMap<>();
+    private       Button                      themeBtn;
+    private       boolean                     isDarkMode = true;
 
     @FXML
     public void initialize() {
@@ -51,7 +47,7 @@ public class MainController {
         if (contentArea.getScene() == null) {
             return;
         }
-        
+
         contentArea.getScene().setOnKeyPressed(event -> {
             // 兼容 Mac Cmd+W 和 Windows Alt+F4
             KeyCombination closeCombo = new KeyCodeCombination(KeyCode.W, KeyCombination.SHORTCUT_DOWN);
@@ -95,15 +91,18 @@ public class MainController {
         contentArea.getChildren().clear();
     }
 
-    private void loadView(String fxml) {
+    private Node loadView(String fxml) {
+        Node viewNode = null;
         try {
             if (!viewCache.containsKey(fxml)) {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
-                viewCache.put(fxml, loader.load());
+                viewNode = loader.load();
+                viewCache.put(fxml, viewNode);
             }
             contentArea.getChildren().setAll(viewCache.get(fxml));
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return viewNode;
     }
 }

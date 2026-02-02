@@ -5,6 +5,7 @@ import com.wolfhouse.modbus_simulator.model.TcpDeviceModel;
 import com.wolfhouse.modbus_simulator.service.FileService;
 import com.wolfhouse.modbus_simulator.service.MockResponseService;
 import com.wolfhouse.modbus_simulator.service.TcpSimulatorService;
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -15,16 +16,18 @@ import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TcpSimulatorController {
 
-    private final ObservableList<TcpDeviceModel>       devices = DeviceManager.getInstance().getTcpDevices();
+    private final ObservableList<TcpDeviceModel>       devices       = DeviceManager.getInstance().getTcpDevices();
     @FXML
     private       TableView<TcpDeviceModel>            deviceTable;
     @FXML
@@ -35,7 +38,12 @@ public class TcpSimulatorController {
     private       TableColumn<TcpDeviceModel, String>  nameColumn;
     @FXML
     private       TableColumn<TcpDeviceModel, Void>    actionsColumn;
+    /** 基础窗口 */
     private       Stage                                baseStage;
+    /** 保存状态 */
+    private       boolean                              isChangeSaved = true;
+    /** 模拟器启动数量 */
+    private       AtomicInteger                        runningCount  = new AtomicInteger(0);
 
     public Stage getBaseStage() {
         if (baseStage == null) {
@@ -89,6 +97,49 @@ public class TcpSimulatorController {
             });
             return row;
         });
+
+        // 注册 stage
+        deviceTable.sceneProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null) {
+                return;
+            }
+            newValue.windowProperty().addListener((_, __, newW) -> {
+                newW.addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this::onClose);
+                this.baseStage = (Stage) newW;
+            });
+        });
+    }
+
+    private void onClose(WindowEvent windowEvent) {
+        if (!this.isChangeSaved) {
+            // 未保存的更改
+            Optional<ButtonType> choice = WindowUtil.showAlert(Alert.AlertType.WARNING,
+                                                               "警告",
+                                                               "未保存的更改",
+                                                               "未保存的修改将丢失，是否继续关闭？",
+                                                               baseStage, ButtonType.YES, ButtonType.NO);
+            if (choice.isEmpty() || choice.get() == ButtonType.NO) {
+                windowEvent.consume();
+                return;
+            }
+        }
+        // 有正在运行的模拟器
+        if (runningCount.get() > 0) {
+            Optional<ButtonType> result = WindowUtil.showAlert(Alert.AlertType.CONFIRMATION,
+                                                               "确认退出",
+                                                               "确认退出 Modbus 模拟器？",
+                                                               "退出后所有正在运行的模拟设备都将停止",
+                                                               baseStage, ButtonType.OK, ButtonType.CANCEL);
+            if (result.isEmpty() || result.get() == ButtonType.CANCEL) {
+                // 消费关闭事件
+                windowEvent.consume();
+                return;
+            }
+        }
+        // 停止所有设备后再退出
+        DeviceManager.getInstance().stopAll();
+        Platform.exit();
+        System.exit(0);
     }
 
     @FXML
@@ -119,6 +170,7 @@ public class TcpSimulatorController {
 
         Optional<ButtonType> result = WindowUtil.showWaitBased(getBaseStage(), alert);
         if (result.isPresent() && result.get() == ButtonType.OK) {
+            this.isChangeSaved = false;
             selected.forEach(model -> {
                 stopDevice(model);
                 devices.remove(model);
@@ -144,7 +196,12 @@ public class TcpSimulatorController {
 
     @FXML
     public void handleExportConf() {
+        FileChooser chooser = FileService.saveFile("导出配置文件",
+                                                   "devices-%s".formatted(System.currentTimeMillis()),
+                                                   "Modbus 配置文件", List.of("*.mof"));
+        File file = chooser.showSaveDialog(new Stage());
 
+        System.out.println(file);
     }
 
     private void setupActionsColumn() {
@@ -284,8 +341,10 @@ public class TcpSimulatorController {
     private void toggleDevice(TcpDeviceModel model) {
         if ("运行中".equals(model.getStatus())) {
             stopDevice(model);
+            runningCount.decrementAndGet();
         } else {
             startDevice(model);
+            runningCount.incrementAndGet();
         }
         deviceTable.refresh();
     }
@@ -402,7 +461,9 @@ public class TcpSimulatorController {
                     newModel.setRemark(remarkArea.getText());
                     devices.add(newModel);
                 }
+                // 刷新表格和状态
                 deviceTable.refresh();
+                this.isChangeSaved = false;
                 stage.close();
             } catch (NumberFormatException ex) {
                 WindowUtil.showError("无效的端口号");

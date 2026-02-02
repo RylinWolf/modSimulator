@@ -23,4 +23,13 @@ public class FileService {
         chooser.setInitialDirectory(new File(initialDir == null ? System.getProperty("user.dir") : initialDir));
         return chooser;
     }
+
+    public static FileChooser saveFile(String title, String initialFileName, String extensionTag, List<String> extension) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(title);
+        chooser.setInitialFileName(initialFileName);
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(extensionTag, extension));
+        chooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        return chooser;
+    }
 }
