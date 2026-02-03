@@ -366,7 +366,7 @@ public class TcpSimulatorController {
             model.setStatus("运行中");
             runningCount.incrementAndGet();
         } catch (IOException e) {
-            WindowUtil.showError("启动失败: " + e.getMessage());
+            WindowUtil.showError("启动失败: " + e.getMessage(), e, baseStage);
         }
     }
 
@@ -450,10 +450,21 @@ public class TcpSimulatorController {
         Runnable saveTask = () -> {
             try {
                 int port = Integer.parseInt(portField.getText());
+                if (port > 0xFFFF || port < 0) {
+                    throw new NumberFormatException();
+                }
+                // 新增设备，检查端口是否重复
                 if (!isEdit || port != existingModel.getPort()) {
                     if (devices.stream().anyMatch(d -> d.getPort() == port)) {
-                        WindowUtil.showError("端口 " + port + " 已被占用");
-                        return;
+                        // 端口已存在
+                        Optional<ButtonType> choice = WindowUtil.showAlert(Alert.AlertType.WARNING,
+                                                                           "警告",
+                                                                           null,
+                                                                           "端口 " + port + " 已存在，是否继续添加",
+                                                                           baseStage, ButtonType.YES, ButtonType.NO);
+                        if (choice.isEmpty() || choice.get() != ButtonType.YES) {
+                            return;
+                        }
                     }
                 }
 
@@ -472,7 +483,7 @@ public class TcpSimulatorController {
                 ProgramStatusContext.unsaved();
                 stage.close();
             } catch (NumberFormatException ex) {
-                WindowUtil.showError("无效的端口号");
+                WindowUtil.showError("无效的端口号", null, baseStage);
             }
         };
 
@@ -491,6 +502,4 @@ public class TcpSimulatorController {
         stage.setScene(scene);
         return stage;
     }
-
-
 }
