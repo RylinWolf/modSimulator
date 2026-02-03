@@ -231,7 +231,7 @@ public class TcpSimulatorController {
 
                 addRespBtn.setOnAction(event -> {
                     TcpDeviceModel model = getTableView().getItems().get(getIndex());
-                    MockResponseService.showResponseManagementDialog(model);
+                    WindowUtil.showBased(baseStage, MockResponseService.showResponseManagementDialog(model));
                     ProgramStatusContext.unsaved();
                 });
 
@@ -487,7 +487,7 @@ public class TcpSimulatorController {
             }
         };
 
-        saveBtn.setOnAction(e -> saveTask.run());
+        saveBtn.setOnAction(_ -> saveTask.run());
 
         // 按下 Enter 保存，排查备注区域
         root.setOnKeyPressed(event -> {

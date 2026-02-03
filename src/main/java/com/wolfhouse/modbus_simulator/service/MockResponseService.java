@@ -33,7 +33,7 @@ public class MockResponseService {
      * @param model        要添加响应的模型
      * @param existingResp 若为 null 则为添加，否则为修改
      */
-    public static void showAddResponseDialog(TcpDeviceModel model, MockResponseModel existingResp) {
+    public static Stage showAddResponseDialog(TcpDeviceModel model, MockResponseModel existingResp) {
         AtomicBoolean isChanged = new AtomicBoolean(false);
         boolean       isEdit    = existingResp != null;
         Stage         stage     = new Stage();
@@ -116,7 +116,7 @@ public class MockResponseService {
                 isChanged.set(true);
                 stage.close();
             } catch (Exception ex) {
-                WindowUtil.showError("输入无效: " + ex.getMessage());
+                WindowUtil.showError("输入无效", ex, stage);
             }
         };
 
@@ -135,10 +135,10 @@ public class MockResponseService {
         Scene scene = new Scene(grid);
         WindowUtil.setupDialogCloseShortcuts(stage, scene);
         stage.setScene(scene);
-        stage.show();
+        return stage;
     }
 
-    public static void showResponseManagementDialog(TcpDeviceModel model) {
+    public static Stage showResponseManagementDialog(TcpDeviceModel model) {
         Stage stage = new Stage();
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.setTitle("响应管理 - 端口 " + model.getPort());
@@ -184,7 +184,7 @@ public class MockResponseService {
         Button addBtn = new Button("添加响应");
         addBtn.getStyleClass().addAll("accent", "button-sm");
         addBtn.setDisable(isRunning);
-        addBtn.setOnAction(e -> showAddResponseDialog(model, null));
+        addBtn.setOnAction(e -> WindowUtil.showBased(stage, showAddResponseDialog(model, null)));
 
         toolbar.getChildren().addAll(batchEnableBtn, batchDisableBtn, batchDelBtn, new Separator(javafx.geometry.Orientation.VERTICAL), addBtn);
         topRow.getChildren().addAll(titleBox, spacer, toolbar);
@@ -224,7 +224,7 @@ public class MockResponseService {
             }
         });
 
-        setupResponseTableContextMenu(respTable, model);
+        setupResponseTableContextMenu(respTable, model, stage);
 
         // 双击编辑响应
         respTable.setRowFactory(tv -> {
@@ -232,7 +232,7 @@ public class MockResponseService {
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && (!row.isEmpty())) {
                     if (!isRunning) {
-                        showAddResponseDialog(model, row.getItem());
+                        WindowUtil.showBased(stage, showAddResponseDialog(model, row.getItem()));
                         respTable.refresh();
                     }
                 }
@@ -281,7 +281,7 @@ public class MockResponseService {
 
                 editBtn.setOnAction(e -> {
                     MockResponseModel resp = getTableView().getItems().get(getIndex());
-                    showAddResponseDialog(model, resp);
+                    WindowUtil.showBased(stage, showAddResponseDialog(model, resp));
                 });
 
                 delBtn.setOnAction(e -> {
@@ -330,15 +330,15 @@ public class MockResponseService {
             scene.getStylesheets().add(resource.toExternalForm());
         }
         stage.setScene(scene);
-        stage.show();
+        return stage;
     }
 
-    public static void setupResponseTableContextMenu(TableView<MockResponseModel> respTable, TcpDeviceModel model) {
+    public static void setupResponseTableContextMenu(TableView<MockResponseModel> respTable, TcpDeviceModel model, Stage based) {
         ContextMenu contextMenu = new ContextMenu();
         boolean     isRunning   = "运行中".equals(model.getStatus());
 
         MenuItem addMenu = new MenuItem("添加新响应");
-        addMenu.setOnAction(e -> showAddResponseDialog(model, null));
+        addMenu.setOnAction(e -> WindowUtil.showBased(based, showAddResponseDialog(model, null)));
         addMenu.setDisable(isRunning);
 
         MenuItem enableMenu = new MenuItem("启用");
@@ -357,7 +357,7 @@ public class MockResponseService {
         editMenu.setOnAction(e -> {
             MockResponseModel selected = respTable.getSelectionModel().getSelectedItem();
             if (selected != null) {
-                showAddResponseDialog(model, selected);
+                WindowUtil.showBased(based, showAddResponseDialog(model, selected));
                 respTable.refresh();
             }
         });
