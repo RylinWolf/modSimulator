@@ -11,10 +11,10 @@ import java.util.List;
  * @author Rylin Wolf
  */
 public class FileService {
-    public static FileChooser loadFile(String title,
-                                       String extensionTag,
-                                       List<String> extension,
-                                       String initialDir) {
+    public static FileChooser loadFileChooser(String title,
+                                              String extensionTag,
+                                              List<String> extension,
+                                              String initialDir) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(title);
         FileChooser.ExtensionFilter filters = new FileChooser.ExtensionFilter(extensionTag, extension);
@@ -24,7 +24,7 @@ public class FileService {
         return chooser;
     }
 
-    public static FileChooser saveFile(String title, String initialFileName, String extensionTag, List<String> extension) {
+    public static FileChooser saveFileChooser(String title, String initialFileName, String extensionTag, List<String> extension) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(title);
         chooser.setInitialFileName(initialFileName);

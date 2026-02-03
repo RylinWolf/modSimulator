@@ -102,7 +102,7 @@ public class TcpSimulatorController {
             if (newValue == null) {
                 return;
             }
-            newValue.windowProperty().addListener((_, __, newW) -> {
+            newValue.windowProperty().addListener((_, _, newW) -> {
                 newW.addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this::onClose);
                 this.baseStage = (Stage) newW;
             });
@@ -162,12 +162,11 @@ public class TcpSimulatorController {
             return;
         }
 
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("确认批量删除");
-        alert.setHeaderText("确认批量删除选中的 " + selected.size() + " 个设备？");
-        alert.setContentText("此操作不可恢复。");
-
-        Optional<ButtonType> result = WindowUtil.showWaitBased(getBaseStage(), alert);
+        Optional<ButtonType> result = WindowUtil.showAlert(Alert.AlertType.CONFIRMATION,
+                                                           "确认批量删除",
+                                                           "确认批量删除选中的 " + selected.size() + " 个设备？",
+                                                           "此操作不可恢复。",
+                                                           baseStage, ButtonType.OK, ButtonType.CANCEL);
         if (result.isPresent() && result.get() == ButtonType.OK) {
             this.isChangeSaved = false;
             selected.forEach(model -> {
@@ -180,10 +179,10 @@ public class TcpSimulatorController {
     @FXML
     private void handleImportConf() {
         Stage stage = new Stage();
-        FileChooser chooser = FileService.loadFile("导入配置文件",
-                                                   "modbus 配置文件",
-                                                   List.of("*.mof"),
-                                                   null);
+        FileChooser chooser = FileService.loadFileChooser("导入配置文件",
+                                                          "modbus 配置文件",
+                                                          List.of("*.mof"),
+                                                          null);
         List<File> files = chooser.showOpenMultipleDialog(stage);
         if (files == null) {
             return;
@@ -195,9 +194,9 @@ public class TcpSimulatorController {
 
     @FXML
     private void handleExportConf() {
-        FileChooser chooser = FileService.saveFile("导出配置文件",
-                                                   "devices-%s".formatted(System.currentTimeMillis()),
-                                                   "Modbus 配置文件", List.of("*.mof"));
+        FileChooser chooser = FileService.saveFileChooser("导出配置文件",
+                                                          "devices-%s".formatted(System.currentTimeMillis()),
+                                                          "Modbus 配置文件", List.of("*.mof"));
         File file = chooser.showSaveDialog(new Stage());
         if (file == null) {
             return;
@@ -208,25 +207,25 @@ public class TcpSimulatorController {
 
     private void exportConf(File file) {
         try {
-            if (!file.createNewFile()) {
+            if (!file.exists() && !file.createNewFile()) {
                 throw new IOException("无法创建新文件");
             }
         } catch (IOException e) {
-            WindowUtil.showError("文件创建失败", e);
+            WindowUtil.showError("文件创建失败", e, baseStage);
             return;
         }
         if (!file.canWrite() && !file.setWritable(true)) {
-            WindowUtil.showError("文件无写入权限");
+            WindowUtil.showError("文件无写入权限", null, baseStage);
             return;
         }
 
         try (FileOutputStream fos = new FileOutputStream(file)) {
             new ObjectOutputStream(fos).writeObject(devices.stream().toList());
         } catch (FileNotFoundException e) {
-            WindowUtil.showError("文件不存在", e);
+            WindowUtil.showError("文件不存在", e, baseStage);
             return;
         } catch (IOException e) {
-            WindowUtil.showError("文件写入失败", e);
+            WindowUtil.showError("文件写入失败", e, baseStage);
             return;
         }
 

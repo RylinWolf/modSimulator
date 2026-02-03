@@ -20,17 +20,26 @@ import java.util.Optional;
  * @author Rylin Wolf
  */
 public class WindowUtil {
-    public static void showError(String message, Exception e) {
+    public static void showError(String message, Throwable e) {
+        showError(message, e, null);
+    }
+
+    public static void showError(String message) {
+        showError(message, null, null);
+    }
+
+    public static void showError(String message, Throwable e, Stage based) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("错误");
         alert.setHeaderText(null);
         String errorMsg = e == null ? "" : "\nError: " + e.getMessage();
         alert.setContentText(message + errorMsg);
-        alert.showAndWait();
-    }
-
-    public static void showError(String message) {
-        showError(message, null);
+        alert.initOwner(based);
+        if (based == null) {
+            alert.showAndWait();
+            return;
+        }
+        showWaitBased(based, alert);
     }
 
     /**
