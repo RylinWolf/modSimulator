@@ -371,10 +371,8 @@ public class TcpSimulatorController {
     private void toggleDevice(TcpDeviceModel model) {
         if ("运行中".equals(model.getStatus())) {
             stopDevice(model);
-            runningCount.decrementAndGet();
         } else {
             startDevice(model);
-            runningCount.incrementAndGet();
         }
         deviceTable.refresh();
     }
@@ -390,6 +388,7 @@ public class TcpSimulatorController {
             simulator.start();
             model.setSimulator(simulator);
             model.setStatus("运行中");
+            runningCount.incrementAndGet();
         } catch (IOException e) {
             WindowUtil.showError("启动失败: " + e.getMessage());
         }
@@ -402,6 +401,7 @@ public class TcpSimulatorController {
             model.setSimulator(null);
         }
         model.setStatus("已停止");
+        runningCount.decrementAndGet();
     }
 
     @FXML
