@@ -3,6 +3,7 @@ package com.wolfhouse.modbus_simulator.service;
 import com.wolfhouse.mod4j.utils.HexUtils;
 import com.wolfhouse.modbus_simulator.WindowUtil;
 import com.wolfhouse.modbus_simulator.model.MockResponseModel;
+import com.wolfhouse.modbus_simulator.model.ProgramStatusContext;
 import com.wolfhouse.modbus_simulator.model.TcpDeviceModel;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -18,6 +19,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 虚拟响应服务
@@ -25,9 +27,16 @@ import java.util.Optional;
  * @author Rylin Wolf
  */
 public class MockResponseService {
+    /**
+     * 显示添加或修改虚拟响应对话框
+     *
+     * @param model        要添加响应的模型
+     * @param existingResp 若为 null 则为添加，否则为修改
+     */
     public static void showAddResponseDialog(TcpDeviceModel model, MockResponseModel existingResp) {
-        boolean isEdit = existingResp != null;
-        Stage   stage  = new Stage();
+        AtomicBoolean isChanged = new AtomicBoolean(false);
+        boolean       isEdit    = existingResp != null;
+        Stage         stage     = new Stage();
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.setTitle(isEdit ? "编辑虚拟响应" : "添加虚拟响应");
 
@@ -103,6 +112,8 @@ public class MockResponseService {
                 }
 
                 TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
+                // 更新状态
+                isChanged.set(true);
                 stage.close();
             } catch (Exception ex) {
                 WindowUtil.showError("输入无效: " + ex.getMessage());
@@ -188,10 +199,14 @@ public class MockResponseService {
         batchEnableBtn.setOnAction(e -> {
             respTable.getSelectionModel().getSelectedItems().forEach(r -> r.setEnabled(true));
             TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
+            // 更新保存状态
+            ProgramStatusContext.UNSAVED.set(true);
         });
         batchDisableBtn.setOnAction(e -> {
             respTable.getSelectionModel().getSelectedItems().forEach(r -> r.setEnabled(false));
             TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
+            // 更新保存状态
+            ProgramStatusContext.UNSAVED.set(true);
         });
         batchDelBtn.setOnAction(e -> {
             List<MockResponseModel> selected = new ArrayList<>(respTable.getSelectionModel().getSelectedItems());
@@ -204,6 +219,8 @@ public class MockResponseService {
             if (alert.showAndWait().orElse(null) == ButtonType.OK) {
                 model.getMockResponses().removeAll(selected);
                 TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
+                // 更新保存状态
+                ProgramStatusContext.UNSAVED.set(true);
             }
         });
 
@@ -279,6 +296,8 @@ public class MockResponseService {
                     if (result.isPresent() && result.get() == ButtonType.OK) {
                         model.getMockResponses().remove(resp);
                         TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
+                        // 更新保存状态
+                        ProgramStatusContext.UNSAVED.set(true);
                     }
                 });
             }
@@ -347,8 +366,13 @@ public class MockResponseService {
         deleteMenu.getStyleClass().add("danger");
         deleteMenu.setOnAction(e -> {
             List<MockResponseModel> selected = new ArrayList<>(respTable.getSelectionModel().getSelectedItems());
+            if (selected.isEmpty()) {
+                return;
+            }
             model.getMockResponses().removeAll(selected);
             TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
+            // 更新保存状态
+            ProgramStatusContext.UNSAVED.set(true);
         });
 
         contextMenu.getItems().addAll(addMenu, new SeparatorMenuItem(), enableMenu, disableMenu, editMenu, new SeparatorMenuItem(), deleteMenu);

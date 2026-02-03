@@ -3,6 +3,9 @@ package com.wolfhouse.modbus_simulator.model;
 import com.wolfhouse.mod4j.utils.ModbusTcpSimulator;
 import javafx.beans.property.*;
 
+/**
+ * @author Rylin Wolf
+ */
 public class MockResponseModel implements SimulatorModel {
     private final StringProperty                                  name     = new SimpleStringProperty("");
     private final StringProperty                                  remark   = new SimpleStringProperty("");

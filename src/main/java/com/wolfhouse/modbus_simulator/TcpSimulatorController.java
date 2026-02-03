@@ -1,6 +1,7 @@
 package com.wolfhouse.modbus_simulator;
 
 import com.wolfhouse.mod4j.utils.ModbusTcpSimulator;
+import com.wolfhouse.modbus_simulator.model.ProgramStatusContext;
 import com.wolfhouse.modbus_simulator.model.TcpDeviceModel;
 import com.wolfhouse.modbus_simulator.service.FileService;
 import com.wolfhouse.modbus_simulator.service.MockResponseService;
@@ -27,9 +28,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TcpSimulatorController {
 
-    private final ObservableList<TcpDeviceModel>       devices       = DeviceManager.getInstance().getTcpDevices();
+    private final ObservableList<TcpDeviceModel>       devices      = DeviceManager.getInstance().getTcpDevices();
     /** 模拟器启动数量 */
-    private final AtomicInteger                        runningCount  = new AtomicInteger(0);
+    private final AtomicInteger                        runningCount = new AtomicInteger(0);
     @FXML
     private       TableView<TcpDeviceModel>            deviceTable;
     @FXML
@@ -42,8 +43,6 @@ public class TcpSimulatorController {
     private       TableColumn<TcpDeviceModel, Void>    actionsColumn;
     /** 基础窗口 */
     private       Stage                                baseStage;
-    /** 保存状态 */
-    private       boolean                              isChangeSaved = true;
 
     public Stage getBaseStage() {
         if (baseStage == null) {
@@ -111,7 +110,7 @@ public class TcpSimulatorController {
     }
 
     private void onClose(WindowEvent windowEvent) {
-        if (!this.isChangeSaved) {
+        if (!ProgramStatusContext.isSaved()) {
             // 未保存的更改
             Optional<ButtonType> choice = WindowUtil.showAlert(Alert.AlertType.WARNING,
                                                                "警告",
@@ -169,7 +168,7 @@ public class TcpSimulatorController {
                                                            "此操作不可恢复。",
                                                            baseStage, ButtonType.OK, ButtonType.CANCEL);
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            this.isChangeSaved = false;
+            ProgramStatusContext.saved();
             selected.forEach(model -> {
                 stopDevice(model);
                 devices.remove(model);
@@ -201,7 +200,10 @@ public class TcpSimulatorController {
             return;
         }
         System.out.printf("导出配置文件: %s%n", file.getAbsolutePath());
-        FileService.exportConf(file, devices.stream().toList(), baseStage);
+        if (FileService.exportConf(file, devices.stream().toList(), baseStage)) {
+            // 导出成功，修改保存状态
+            ProgramStatusContext.saved();
+        }
     }
 
 
@@ -230,11 +232,13 @@ public class TcpSimulatorController {
                 addRespBtn.setOnAction(event -> {
                     TcpDeviceModel model = getTableView().getItems().get(getIndex());
                     MockResponseService.showResponseManagementDialog(model);
+                    ProgramStatusContext.unsaved();
                 });
 
                 editBtn.setOnAction(event -> {
                     TcpDeviceModel model = getTableView().getItems().get(getIndex());
                     WindowUtil.showBased(getBaseStage(), getDeviceDialog(model));
+                    ProgramStatusContext.unsaved();
                 });
 
                 consoleBtn.setOnAction(event -> {
@@ -256,6 +260,7 @@ public class TcpSimulatorController {
                     if (result.isPresent() && result.get() == ButtonType.OK) {
                         stopDevice(model);
                         devices.remove(model);
+                        ProgramStatusContext.unsaved();
                     }
                 });
             }
@@ -464,7 +469,7 @@ public class TcpSimulatorController {
                 }
                 // 刷新表格和状态
                 deviceTable.refresh();
-                this.isChangeSaved = false;
+                ProgramStatusContext.unsaved();
                 stage.close();
             } catch (NumberFormatException ex) {
                 WindowUtil.showError("无效的端口号");
