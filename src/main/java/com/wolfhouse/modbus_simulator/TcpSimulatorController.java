@@ -18,7 +18,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +28,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TcpSimulatorController {
 
     private final ObservableList<TcpDeviceModel>       devices       = DeviceManager.getInstance().getTcpDevices();
+    /** 模拟器启动数量 */
+    private final AtomicInteger                        runningCount  = new AtomicInteger(0);
     @FXML
     private       TableView<TcpDeviceModel>            deviceTable;
     @FXML
@@ -41,8 +44,6 @@ public class TcpSimulatorController {
     private       Stage                                baseStage;
     /** 保存状态 */
     private       boolean                              isChangeSaved = true;
-    /** 模拟器启动数量 */
-    private       AtomicInteger                        runningCount  = new AtomicInteger(0);
 
     public Stage getBaseStage() {
         if (baseStage == null) {
@@ -187,9 +188,7 @@ public class TcpSimulatorController {
         if (files == null) {
             return;
         }
-        for (File file : files) {
-            System.out.printf("导入配置文件: %s%n", file.getAbsoluteFile());
-        }
+        FileService.importConf(files, baseStage);
     }
 
     @FXML
@@ -202,37 +201,9 @@ public class TcpSimulatorController {
             return;
         }
         System.out.printf("导出配置文件: %s%n", file.getAbsolutePath());
-        exportConf(file);
+        FileService.exportConf(file, devices.stream().toList(), baseStage);
     }
 
-    private void exportConf(File file) {
-        try {
-            if (!file.exists() && !file.createNewFile()) {
-                throw new IOException("无法创建新文件");
-            }
-        } catch (IOException e) {
-            WindowUtil.showError("文件创建失败", e, baseStage);
-            return;
-        }
-        if (!file.canWrite() && !file.setWritable(true)) {
-            WindowUtil.showError("文件无写入权限", null, baseStage);
-            return;
-        }
-
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            new ObjectOutputStream(fos).writeObject(devices.stream().toList());
-        } catch (FileNotFoundException e) {
-            WindowUtil.showError("文件不存在", e, baseStage);
-            return;
-        } catch (IOException e) {
-            WindowUtil.showError("文件写入失败", e, baseStage);
-            return;
-        }
-
-        WindowUtil.showAlert(Alert.AlertType.INFORMATION, "导出成功", "文件导出成功",
-                             "", baseStage, ButtonType.OK);
-
-    }
 
     private void setupActionsColumn() {
         actionsColumn.setCellFactory(_ -> new TableCell<>() {
@@ -428,7 +399,7 @@ public class TcpSimulatorController {
         grid.setVgap(20);
 
         TextField nameField = new TextField(isEdit ? existingModel.getName() : "");
-        nameField.setPromptText("例如：车间 A 模拟器");
+        nameField.setPromptText("例如：局放监测主机");
 
         TextField portField = new TextField(isEdit ? String.valueOf(existingModel.getPort()) : "5502");
         portField.setPromptText("默认 5502");

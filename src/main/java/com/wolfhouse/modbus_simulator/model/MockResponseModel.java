@@ -3,7 +3,7 @@ package com.wolfhouse.modbus_simulator.model;
 import com.wolfhouse.mod4j.utils.ModbusTcpSimulator;
 import javafx.beans.property.*;
 
-public class MockResponseModel {
+public class MockResponseModel implements SimulatorModel {
     private final StringProperty                                  name     = new SimpleStringProperty("");
     private final StringProperty                                  remark   = new SimpleStringProperty("");
     private final BooleanProperty                                 enabled  = new SimpleBooleanProperty(true);
@@ -21,35 +21,65 @@ public class MockResponseModel {
         this.dataType.set(pair.randData() ? "随机" : "固定");
     }
 
-    public String getName()                                               {return name.get();}
+    public String getName() {
+        return name.get();
+    }
 
-    public void setName(String name)                                      {this.name.set(name);}
+    public void setName(String name) {
+        this.name.set(name);
+    }
 
-    public StringProperty nameProperty()                                  {return name;}
+    public StringProperty nameProperty() {
+        return name;
+    }
 
-    public String getRemark()                                             {return remark.get();}
+    public String getRemark() {
+        return remark.get();
+    }
 
-    public void setRemark(String remark)                                  {this.remark.set(remark);}
+    public void setRemark(String remark) {
+        this.remark.set(remark);
+    }
 
-    public StringProperty remarkProperty()                                {return remark;}
+    public StringProperty remarkProperty() {
+        return remark;
+    }
 
-    public boolean isEnabled()                                            {return enabled.get();}
+    public boolean isEnabled() {
+        return enabled.get();
+    }
 
-    public void setEnabled(boolean enabled)                               {this.enabled.set(enabled);}
+    public void setEnabled(boolean enabled) {
+        this.enabled.set(enabled);
+    }
 
-    public BooleanProperty enabledProperty()                              {return enabled;}
+    public BooleanProperty enabledProperty() {
+        return enabled;
+    }
 
-    public String getSlaveId()                                            {return slaveId.get();}
+    public String getSlaveId() {
+        return slaveId.get();
+    }
 
-    public void setSlaveId(String slaveId)                                {this.slaveId.set(slaveId);}
+    public void setSlaveId(String slaveId) {
+        this.slaveId.set(slaveId);
+    }
 
-    public StringProperty slaveIdProperty()                               {return slaveId;}
+    public StringProperty slaveIdProperty() {
+        return slaveId;
+    }
 
-    public ModbusTcpSimulator.MockRespPair getPair()                      {return pair.get();}
+    public ModbusTcpSimulator.MockRespPair getPair() {
+        return pair.get();
+    }
 
-    public void setPair(ModbusTcpSimulator.MockRespPair pair)             {this.pair.set(pair);}
+    public void setPair(ModbusTcpSimulator.MockRespPair pair) {
+        this.pair.set(pair);
+    }
 
-    public ObjectProperty<ModbusTcpSimulator.MockRespPair> pairProperty() {return pair;}
+    public ObjectProperty<ModbusTcpSimulator.MockRespPair> pairProperty() {
+        return pair;
+    }
 
     public String getRegAddr() {
         return regAddr.get();

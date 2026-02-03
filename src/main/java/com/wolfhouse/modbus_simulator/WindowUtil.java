@@ -32,7 +32,7 @@ public class WindowUtil {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("错误");
         alert.setHeaderText(null);
-        String errorMsg = e == null ? "" : "\nError: " + e.getMessage();
+        String errorMsg = e == null ? "" : "\nError: " + e;
         alert.setContentText(message + errorMsg);
         alert.initOwner(based);
         if (based == null) {

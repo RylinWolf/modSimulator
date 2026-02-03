@@ -1,26 +1,37 @@
 package com.wolfhouse.modbus_simulator.model;
 
 import com.wolfhouse.mod4j.utils.ModbusTcpSimulator;
-import javafx.beans.property.*;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import lombok.Getter;
+import lombok.Setter;
 
-public class TcpDeviceModel {
-    private final StringProperty name = new SimpleStringProperty("");
-    private final StringProperty remark = new SimpleStringProperty("");
-    private final IntegerProperty port = new SimpleIntegerProperty();
-    private final StringProperty status = new SimpleStringProperty("已停止");
+public class TcpDeviceModel implements SimulatorModel {
+    private final StringProperty                    name          = new SimpleStringProperty("");
+    private final StringProperty                    remark        = new SimpleStringProperty("");
+    private final IntegerProperty                   port          = new SimpleIntegerProperty();
+    private final StringProperty                    status        = new SimpleStringProperty("已停止");
+    @Getter
     private final ObservableList<MockResponseModel> mockResponses = FXCollections.observableArrayList();
-    private ModbusTcpSimulator simulator;
-    private final StringProperty logs = new SimpleStringProperty("");
+    private final StringProperty                    logs          = new SimpleStringProperty("");
+    @Getter
+    @Setter
+    private       ModbusTcpSimulator                simulator;
 
     public TcpDeviceModel(int port) {
         this.port.set(port);
     }
 
-    public String getLogs() { return logs.get(); }
-    public StringProperty logsProperty() { return logs; }
-    public void setLogs(String logs) { this.logs.set(logs); }
+    public String getLogs()              {return logs.get();}
+
+    public void setLogs(String logs)     {this.logs.set(logs);}
+
+    public StringProperty logsProperty() {return logs;}
+
     public void appendLog(String log) {
         if (com.wolfhouse.modbus_simulator.DeviceManager.getInstance().isShuttingDown()) {
             return;
@@ -42,26 +53,31 @@ public class TcpDeviceModel {
             });
         }
     }
-    public void clearLogs() { this.logs.set(""); }
 
-    public String getName() { return name.get(); }
-    public StringProperty nameProperty() { return name; }
-    public void setName(String name) { this.name.set(name); }
+    public void clearLogs()                {this.logs.set("");}
 
-    public String getRemark() { return remark.get(); }
-    public StringProperty remarkProperty() { return remark; }
-    public void setRemark(String remark) { this.remark.set(remark); }
+    public String getName()                {return name.get();}
 
-    public int getPort() { return port.get(); }
-    public IntegerProperty portProperty() { return port; }
-    public void setPort(int port) { this.port.set(port); }
+    public void setName(String name)       {this.name.set(name);}
 
-    public String getStatus() { return status.get(); }
-    public StringProperty statusProperty() { return status; }
-    public void setStatus(String status) { this.status.set(status); }
+    public StringProperty nameProperty()   {return name;}
 
-    public ObservableList<MockResponseModel> getMockResponses() { return mockResponses; }
+    public String getRemark()              {return remark.get();}
 
-    public ModbusTcpSimulator getSimulator() { return simulator; }
-    public void setSimulator(ModbusTcpSimulator simulator) { this.simulator = simulator; }
+    public void setRemark(String remark)   {this.remark.set(remark);}
+
+    public StringProperty remarkProperty() {return remark;}
+
+    public int getPort()                   {return port.get();}
+
+    public void setPort(int port)          {this.port.set(port);}
+
+    public IntegerProperty portProperty()  {return port;}
+
+    public String getStatus()              {return status.get();}
+
+    public void setStatus(String status)   {this.status.set(status);}
+
+    public StringProperty statusProperty() {return status;}
+
 }
