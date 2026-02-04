@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.geometry.Insets?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
-
-<BorderPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            xmlns="http://javafx.com/javafx"
             fx:controller="com.wolfhouse.modbus_simulator.MainController"
             prefHeight="720.0" prefWidth="1100.0"
             stylesheets="@style.css"
@@ -20,9 +19,9 @@
                 <FontIcon iconLiteral="mdi2l-lan" iconSize="28" styleClass="accent-icon"/>
                 <Label text="MODBUS" styleClass="sidebar-title"/>
             </HBox>
-            
+
             <ToggleButton text="TCP 模拟器" fx:id="tcpBtn" onAction="#showTcpView"
-                    maxWidth="Infinity" styleClass="nav-button" selected="true">
+                          maxWidth="Infinity" styleClass="nav-button" selected="true">
                 <graphic>
                     <FontIcon iconLiteral="mdi2e-ethernet"/>
                 </graphic>
@@ -30,27 +29,41 @@
                     <ToggleGroup fx:id="navGroup"/>
                 </toggleGroup>
             </ToggleButton>
-            
+
             <ToggleButton text="RTU 模拟器" fx:id="rtuBtn" onAction="#showRtuView"
-                    maxWidth="Infinity" styleClass="nav-button" toggleGroup="$navGroup">
+                          maxWidth="Infinity" styleClass="nav-button" toggleGroup="$navGroup">
                 <graphic>
-                    <FontIcon iconLiteral="mdi2u-usb-port"/>
+                    <FontIcon iconLiteral="mdi2s-serial-port"/>
                 </graphic>
             </ToggleButton>
-            
+
             <Region VBox.vgrow="ALWAYS"/>
-            
+
             <Separator prefWidth="Infinity">
                 <padding>
                     <Insets bottom="10" top="10"/>
                 </padding>
             </Separator>
 
-            <HBox spacing="10" alignment="CENTER">
+            <VBox spacing="10" alignment="CENTER">
                 <Button fx:id="themeBtn" onAction="#toggleTheme" styleClass="button-circle, flat">
-                    <tooltip><Tooltip text="切换主题"/></tooltip>
+                    <tooltip>
+                        <Tooltip text="切换主题"/>
+                    </tooltip>
                 </Button>
-            </HBox>
+
+                <Separator prefWidth="Infinity">
+                    <padding>
+                        <Insets bottom="10" top="10"/>
+                    </padding>
+                </Separator>
+
+                <VBox spacing="3" alignment="BOTTOM_CENTER">
+                    <Label text="Modbus Simulator"/>
+                    <Label text="Version 1.1.1"/>
+                    <Label text="Developed By Rylin" styleClass="sidebar-foot"/>
+                </VBox>
+            </VBox>
         </VBox>
     </left>
     <center>

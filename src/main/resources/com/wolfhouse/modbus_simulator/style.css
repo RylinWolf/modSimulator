@@ -17,7 +17,7 @@
     -fx-background-color: -color-bg-subtle;
     -fx-border-color: -color-border-subtle;
     -fx-border-width: 0 1 0 0;
-    -fx-padding: 32px 12px;
+    -fx-padding: 32px 12px 12px 12px;
 }
 
 .sidebar-title {
@@ -25,6 +25,10 @@
     -fx-font-size: 18px;
     -fx-font-weight: 800;
     -fx-letter-spacing: 1px;
+}
+
+.sidebar-foot {
+    -fx-font-size: 10px;
 }
 
 .accent-icon {

@@ -14,6 +14,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -169,21 +170,28 @@ public class MockResponseService {
         HBox toolbar = new HBox(10);
         toolbar.setAlignment(Pos.CENTER_LEFT);
 
-        Button batchEnableBtn = new Button("启用");
+        Button batchEnableBtn = new Button("批量启用");
         batchEnableBtn.getStyleClass().addAll("button-outlined", "button-sm");
         batchEnableBtn.setDisable(isRunning);
+        batchEnableBtn.setGraphic(new FontIcon("mdi2p-play"));
 
-        Button batchDisableBtn = new Button("停用");
+        Button batchDisableBtn = new Button("批量停用");
         batchDisableBtn.getStyleClass().addAll("button-outlined", "button-sm");
         batchDisableBtn.setDisable(isRunning);
+        batchDisableBtn.setGraphic(new FontIcon("mdi2s-stop"));
 
-        Button batchDelBtn = new Button("删除");
+
+        Button batchDelBtn = new Button("批量删除");
         batchDelBtn.getStyleClass().addAll("button-outlined", "button-sm", "danger");
         batchDelBtn.setDisable(isRunning);
+        batchDelBtn.setGraphic(new FontIcon("mdi2t-trash-can-outline"));
+
 
         Button addBtn = new Button("添加响应");
         addBtn.getStyleClass().addAll("accent", "button-sm");
         addBtn.setDisable(isRunning);
+        addBtn.setGraphic(new FontIcon("mdi2p-plus"));
+
         addBtn.setOnAction(e -> WindowUtil.showBased(stage, showAddResponseDialog(model, null)));
 
         toolbar.getChildren().addAll(batchEnableBtn, batchDisableBtn, batchDelBtn, new Separator(javafx.geometry.Orientation.VERTICAL), addBtn);
@@ -213,10 +221,13 @@ public class MockResponseService {
             if (selected.isEmpty()) {
                 return;
             }
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-            alert.setTitle("确认批量删除");
-            alert.setHeaderText("确认删除选中的 " + selected.size() + " 个响应？");
-            if (alert.showAndWait().orElse(null) == ButtonType.OK) {
+            Optional<ButtonType> result = WindowUtil.showAlert(Alert.AlertType.CONFIRMATION,
+                                                               "确认批量删除",
+                                                               "确认删除选中的 " + selected.size() + " 个响应？",
+                                                               "此操作无法恢复",
+                                                               stage,
+                                                               ButtonType.OK, ButtonType.CANCEL);
+            if (result.orElse(null) == ButtonType.OK) {
                 model.getMockResponses().removeAll(selected);
                 TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
                 // 更新保存状态

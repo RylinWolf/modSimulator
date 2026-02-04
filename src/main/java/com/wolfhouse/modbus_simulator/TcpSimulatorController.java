@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TcpSimulatorController {
 
+    public static final String STATE_RUNNING = "运行中";
     private final ObservableList<TcpDeviceModel>       devices      = DeviceManager.getInstance().getTcpDevices();
     /** 模拟器启动数量 */
     private final AtomicInteger                        runningCount = new AtomicInteger(0);
@@ -36,13 +37,13 @@ public class TcpSimulatorController {
     @FXML
     private       TableColumn<TcpDeviceModel, Integer> portColumn;
     @FXML
-    private       TableColumn<TcpDeviceModel, String>  statusColumn;
+    private TableColumn<TcpDeviceModel, String> statusColumn;
     @FXML
-    private       TableColumn<TcpDeviceModel, String>  nameColumn;
+    private TableColumn<TcpDeviceModel, String> nameColumn;
     @FXML
-    private       TableColumn<TcpDeviceModel, Void>    actionsColumn;
+    private TableColumn<TcpDeviceModel, Void>   actionsColumn;
     /** 基础窗口 */
-    private       Stage                                baseStage;
+    private Stage                               baseStage;
 
     public Stage getBaseStage() {
         if (baseStage == null) {
@@ -66,7 +67,7 @@ public class TcpSimulatorController {
                 } else {
                     Label badge = new Label(item);
                     badge.getStyleClass().add("badge");
-                    if ("运行中".equals(item)) {
+                    if (STATE_RUNNING.equals(item)) {
                         badge.getStyleClass().add("badge-success");
                     } else {
                         badge.getStyleClass().add("badge-danger");
@@ -89,7 +90,7 @@ public class TcpSimulatorController {
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && (!row.isEmpty())) {
                     TcpDeviceModel model = row.getItem();
-                    if (!"运行中".equals(model.getStatus())) {
+                    if (!STATE_RUNNING.equals(model.getStatus())) {
                         WindowUtil.showBased(getBaseStage(), getDeviceDialog(model));
                     }
                 }
@@ -206,7 +207,6 @@ public class TcpSimulatorController {
         }
     }
 
-
     private void setupActionsColumn() {
         actionsColumn.setCellFactory(_ -> new TableCell<>() {
             private final Button startStopBtn = new Button();
@@ -251,12 +251,12 @@ public class TcpSimulatorController {
                 deleteBtn.setOnAction(event -> {
                     TcpDeviceModel model = getTableView().getItems().get(getIndex());
 
-                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                    alert.setTitle("确认删除");
-                    alert.setHeaderText("确认删除设备？");
-                    alert.setContentText("名称: " + model.getName() + "\n端口: " + model.getPort());
-
-                    Optional<ButtonType> result = alert.showAndWait();
+                    Optional<ButtonType> result = WindowUtil.showAlert(Alert.AlertType.CONFIRMATION,
+                                                                       "确定删除",
+                                                                       "确认删除设备?",
+                                                                       "名称: " + model.getName() + "\n端口: " + model.getPort(),
+                                                                       baseStage,
+                                                                       ButtonType.OK, ButtonType.CANCEL);
                     if (result.isPresent() && result.get() == ButtonType.OK) {
                         stopDevice(model);
                         devices.remove(model);
@@ -272,7 +272,7 @@ public class TcpSimulatorController {
                     setGraphic(null);
                 } else {
                     TcpDeviceModel model     = getTableView().getItems().get(getIndex());
-                    boolean        isRunning = "运行中".equals(model.getStatus());
+                    boolean        isRunning = STATE_RUNNING.equals(model.getStatus());
                     startStopBtn.setText(isRunning ? "停止" : "启动");
                     if (isRunning) {
                         startStopBtn.getStyleClass().remove("success");
@@ -305,7 +305,7 @@ public class TcpSimulatorController {
 
         editMenu.setOnAction(e -> {
             TcpDeviceModel selected = deviceTable.getSelectionModel().getSelectedItem();
-            if (selected != null && !"运行中".equals(selected.getStatus())) {
+            if (selected != null && !STATE_RUNNING.equals(selected.getStatus())) {
                 WindowUtil.showBased(getBaseStage(), getDeviceDialog(selected));
             }
         });
@@ -327,7 +327,7 @@ public class TcpSimulatorController {
             boolean hasSelection    = !deviceTable.getSelectionModel().getSelectedItems().isEmpty();
             boolean singleSelection = deviceTable.getSelectionModel().getSelectedItems().size() == 1;
             boolean anyRunning = deviceTable.getSelectionModel().getSelectedItems().stream()
-                                            .anyMatch(d -> "运行中".equals(d.getStatus()));
+                                            .anyMatch(d -> STATE_RUNNING.equals(d.getStatus()));
 
             // 操作选项
             startMenu.setVisible(hasSelection);
@@ -345,7 +345,7 @@ public class TcpSimulatorController {
     }
 
     private void toggleDevice(TcpDeviceModel model) {
-        if ("运行中".equals(model.getStatus())) {
+        if (STATE_RUNNING.equals(model.getStatus())) {
             stopDevice(model);
         } else {
             startDevice(model);
@@ -354,7 +354,7 @@ public class TcpSimulatorController {
     }
 
     private void startDevice(TcpDeviceModel model) {
-        if ("运行中".equals(model.getStatus())) {
+        if (STATE_RUNNING.equals(model.getStatus())) {
             return;
         }
         try {
@@ -363,13 +363,12 @@ public class TcpSimulatorController {
             TcpSimulatorService.updateSimulatorResps(model, simulator);
             simulator.start();
             model.setSimulator(simulator);
-            model.setStatus("运行中");
+            model.setStatus(STATE_RUNNING);
             runningCount.incrementAndGet();
         } catch (IOException e) {
             WindowUtil.showError("启动失败: " + e.getMessage(), e, baseStage);
         }
     }
-
 
     private void stopDevice(TcpDeviceModel model) {
         if (model.getSimulator() != null) {
@@ -502,4 +501,6 @@ public class TcpSimulatorController {
         stage.setScene(scene);
         return stage;
     }
+
+
 }

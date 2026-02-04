@@ -28,7 +28,7 @@ public class MainApplication extends Application {
 
         FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("main-view.fxml"));
         Scene      scene      = new Scene(fxmlLoader.load());
-        stage.setTitle("Modbus 模拟器 V1.1");
+        stage.setTitle("Modbus 模拟器");
         stage.setScene(scene);
         stage.show();
     }

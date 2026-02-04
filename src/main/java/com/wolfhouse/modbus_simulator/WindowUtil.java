@@ -72,7 +72,7 @@ public class WindowUtil {
                 stage.close();
                 return;
             }
-            // 兼容 Cmd+W (Mac) 和 Alt+F4 (Windows 由 OS 处理，但 JavaFX 也可以捕捉)
+            // 兼容 Cmd+W (Mac) 和 Alt+F4
             KeyCombination closeCombo = new KeyCodeCombination(KeyCode.W, KeyCombination.SHORTCUT_DOWN);
             if (closeCombo.match(event)) {
                 stage.close();
