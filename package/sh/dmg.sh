@@ -4,7 +4,7 @@ jpackage \
   --dest dist \
   --name "ModbusSimulator" \
   --mac-package-name "Modbus模拟器" \
-  --app-version "1.1" \
+  --app-version "1.1.1" \
   --vendor "WolfHouse" \
   --input target/libs \
   --main-jar modbus_simulator-1.1.jar \

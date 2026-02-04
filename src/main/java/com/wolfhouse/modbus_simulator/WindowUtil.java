@@ -28,7 +28,7 @@ public class WindowUtil {
         showError(message, null, null);
     }
 
-    public static void showError(String message, Throwable e, Stage based) {
+    public static void showError(String message, Throwable e, Window based) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("错误");
         alert.setHeaderText(null);
@@ -56,7 +56,7 @@ public class WindowUtil {
                                                  String title,
                                                  String headerText,
                                                  String contentText,
-                                                 Stage based,
+                                                 Window based,
                                                  ButtonType... buttons) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
@@ -103,7 +103,7 @@ public class WindowUtil {
         return (Stage) node.getScene().getWindow();
     }
 
-    public static <T> Optional<T> showWaitBased(Stage based, Dialog<T> show) {
+    public static <T> Optional<T> showWaitBased(Window based, Dialog<T> show) {
         show.initOwner(based);
 
         double centerX = based.getX() + based.getWidth() / 2;

@@ -298,12 +298,13 @@ public class MockResponseService {
                 delBtn.setOnAction(e -> {
                     MockResponseModel resp = getTableView().getItems().get(getIndex());
 
-                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                    alert.setTitle("确认删除响应");
-                    alert.setHeaderText("确认删除该虚拟响应？");
-                    alert.setContentText("地址: " + resp.getPair().registerAddr());
+                    Optional<ButtonType> result = WindowUtil.showAlert(Alert.AlertType.CONFIRMATION,
+                                                                       "确认删除响应",
+                                                                       "确认删除该虚拟响应？",
+                                                                       "地址: " + String.format("0x%04x", resp.getPair().registerAddr()),
+                                                                       stage,
+                                                                       ButtonType.OK, ButtonType.CANCEL);
 
-                    Optional<ButtonType> result = alert.showAndWait();
                     if (result.isPresent() && result.get() == ButtonType.OK) {
                         model.getMockResponses().remove(resp);
                         TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
@@ -378,6 +379,15 @@ public class MockResponseService {
         deleteMenu.setOnAction(e -> {
             List<MockResponseModel> selected = new ArrayList<>(respTable.getSelectionModel().getSelectedItems());
             if (selected.isEmpty()) {
+                return;
+            }
+            Optional<ButtonType> result = WindowUtil.showAlert(Alert.AlertType.CONFIRMATION,
+                                                               "确认删除响应",
+                                                               "确认删除选中的虚拟响应？",
+                                                               "选中响应数量: " + selected.size() + "个",
+                                                               based,
+                                                               ButtonType.OK, ButtonType.CANCEL);
+            if (result.orElse(null) != ButtonType.OK) {
                 return;
             }
             model.getMockResponses().removeAll(selected);
