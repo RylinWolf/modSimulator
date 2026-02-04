@@ -8,6 +8,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
@@ -18,7 +19,10 @@ import javafx.stage.WindowEvent;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.materialdesign2.MaterialDesignW;
 
+import java.awt.*;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class MainController {
 
@@ -29,11 +33,14 @@ public class MainController {
     private       ToggleGroup                 navGroup;
     @FXML
     private       Button                      themeBtn;
+    @FXML
+    private       Label                       versionLabel;
     private       boolean                     isDarkMode = true;
 
     @FXML
     public void initialize() {
         themeBtn.setGraphic(new FontIcon(MaterialDesignW.WEATHER_NIGHT));
+        versionLabel.setText("Version: %s".formatted("1.2"));
         showTcpView();
 
         // 在 initialize 之后，Scene 才会附加到 contentArea 的窗口
@@ -101,8 +108,23 @@ public class MainController {
             }
             contentArea.getChildren().setAll(viewCache.get(fxml));
         } catch (IOException e) {
-            e.printStackTrace();
+            WindowUtil.showError("加载视图失败", e, WindowUtil.getStage(contentArea));
         }
         return viewNode;
+    }
+
+    @FXML
+    private void browseGithub() {
+        openUrl("https://github.com/RylinWolf");
+    }
+
+    public void openUrl(String url) {
+        if (Desktop.isDesktopSupported()) {
+            try {
+                Desktop.getDesktop().browse(new URI(url));
+            } catch (IOException | URISyntaxException e) {
+                WindowUtil.showError("出现错误", e, WindowUtil.getStage(contentArea));
+            }
+        }
     }
 }

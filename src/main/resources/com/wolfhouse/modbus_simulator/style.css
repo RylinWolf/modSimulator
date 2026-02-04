@@ -27,8 +27,15 @@
     -fx-letter-spacing: 1px;
 }
 
-.sidebar-foot {
+.developer-link {
+    -fx-text-fill: #69abf4;
     -fx-font-size: 10px;
+    -fx-underline: false;
+    -fx-border-color: transparent;
+}
+
+.developer-link:hover {
+    -fx-underline: true;
 }
 
 .accent-icon {

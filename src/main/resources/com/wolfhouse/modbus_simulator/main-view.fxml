@@ -60,8 +60,8 @@
 
                 <VBox spacing="3" alignment="BOTTOM_CENTER">
                     <Label text="Modbus Simulator"/>
-                    <Label text="Version 1.1.1"/>
-                    <Label text="Developed By Rylin" styleClass="sidebar-foot"/>
+                    <Label fx:id="versionLabel"/>
+                    <Hyperlink text="Developed By Rylin" styleClass="developer-link" onAction="#browseGithub"/>
                 </VBox>
             </VBox>
         </VBox>

@@ -106,8 +106,13 @@ public class TcpSimulatorController {
                 return;
             }
             newValue.windowProperty().addListener((_, _, newW) -> {
-                newW.addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this::onClose);
                 this.baseStage = (Stage) newW;
+                // 注册关闭事件
+                newW.addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, this::onClose);
+                // 注册保存快捷键事件
+                WindowUtil.addSaveShortcut(newW, this::handleExportConf, true);
+                // 注册删除快捷键事件
+                WindowUtil.addDeleteShortcut(newW, this::handleBatchDelete, true);
             });
         });
     }
@@ -166,8 +171,8 @@ public class TcpSimulatorController {
         }
 
         Optional<ButtonType> result = WindowUtil.showAlert(Alert.AlertType.CONFIRMATION,
-                                                           "确认批量删除",
-                                                           "确认批量删除选中的 " + selected.size() + " 个设备？",
+                                                           "确认删除",
+                                                           "确认删除选中的 " + selected.size() + " 个设备？",
                                                            "此操作不可恢复。",
                                                            baseStage, ButtonType.OK, ButtonType.CANCEL);
         if (result.isPresent() && result.get() == ButtonType.OK) {
@@ -195,6 +200,11 @@ public class TcpSimulatorController {
 
     @FXML
     private void handleExportConf() {
+        if (devices.isEmpty()) {
+            WindowUtil.showAlert(Alert.AlertType.INFORMATION, "提示", "没有可导出的配置项",
+                                 null, baseStage, ButtonType.OK);
+            return;
+        }
         FileChooser chooser = FileService.saveFileChooser("导出配置文件",
                                                           "devices-%s".formatted(System.currentTimeMillis()),
                                                           "Modbus 配置文件", List.of("*.mof"));
@@ -314,7 +324,7 @@ public class TcpSimulatorController {
 
         MenuItem deleteMenu = new MenuItem("删除选中设备");
         deleteMenu.getStyleClass().add("danger");
-        deleteMenu.setOnAction(e -> handleBatchDelete());
+        deleteMenu.setOnAction(_ -> handleBatchDelete());
 
         // 操作选项分隔符
         SeparatorMenuItem actionSep = new SeparatorMenuItem();
@@ -506,7 +516,7 @@ public class TcpSimulatorController {
             }
         });
         // 绑定保存按键
-        WindowUtil.addSaveShortcut(stage, saveTask);
+        WindowUtil.addSaveShortcut(stage, saveTask, true);
 
         Scene scene = new Scene(root);
         WindowUtil.setupDialogCloseShortcuts(stage, scene);

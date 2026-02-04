@@ -137,8 +137,7 @@ public class MockResponseService {
             }
         });
         // 按下 cmd+s / ctrl+s 保存
-        WindowUtil.addSaveShortcut(grid, saveTask);
-
+        WindowUtil.addSaveShortcut(grid, saveTask, true);
         grid.add(saveBtn, 1, 7);
 
         Scene scene = new Scene(grid);
@@ -224,13 +223,15 @@ public class MockResponseService {
             // 更新保存状态
             ProgramStatusContext.UNSAVED.set(true);
         });
-        batchDelBtn.setOnAction(e -> {
+
+        // 删除操作
+        Runnable delAction = () -> {
             List<MockResponseModel> selected = new ArrayList<>(respTable.getSelectionModel().getSelectedItems());
             if (selected.isEmpty()) {
                 return;
             }
             Optional<ButtonType> result = WindowUtil.showAlert(Alert.AlertType.CONFIRMATION,
-                                                               "确认批量删除",
+                                                               "确认删除",
                                                                "确认删除选中的 " + selected.size() + " 个响应？",
                                                                "此操作无法恢复",
                                                                stage,
@@ -241,7 +242,11 @@ public class MockResponseService {
                 // 更新保存状态
                 ProgramStatusContext.UNSAVED.set(true);
             }
-        });
+        };
+        // 删除按钮事件
+        batchDelBtn.setOnAction(_ -> delAction.run());
+        // 绑定删除快捷键
+        WindowUtil.addDeleteShortcut(stage, delAction, true);
 
         setupResponseTableContextMenu(respTable, model, stage);
 

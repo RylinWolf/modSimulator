@@ -11,6 +11,7 @@ module com.wolfhouse.modbus_simulator {
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.ikonli.materialdesign2;
     requires mod4j;
+    requires java.desktop;
 
     opens com.wolfhouse.modbus_simulator to javafx.fxml;
     exports com.wolfhouse.modbus_simulator;

@@ -108,11 +108,24 @@ public class WindowUtil {
         return show.showAndWait();
     }
 
-    public static void addSaveShortcut(EventTarget target, Runnable saveAction) {
+    public static void addSaveShortcut(EventTarget target, Runnable saveAction, boolean consume) {
         target.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
             if (e.getCode() == KeyCode.S && (e.isControlDown() || e.isMetaDown())) {
                 saveAction.run();
-                e.consume();
+                if (consume) {
+                    e.consume();
+                }
+            }
+        });
+    }
+
+    public static void addDeleteShortcut(EventTarget target, Runnable deleteAction, boolean consume) {
+        target.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
+            if (e.getCode() == KeyCode.DELETE) {
+                deleteAction.run();
+                if (consume) {
+                    e.consume();
+                }
             }
         });
     }
