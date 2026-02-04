@@ -1,8 +1,8 @@
 package com.wolfhouse.modbus_simulator.service;
 
-import com.wolfhouse.modbus_simulator.WindowUtil;
 import com.wolfhouse.modbus_simulator.model.MockResponseModel;
 import com.wolfhouse.modbus_simulator.model.TcpDeviceModel;
+import com.wolfhouse.modbus_simulator.util.WindowUtil;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;

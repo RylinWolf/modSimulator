@@ -1,11 +1,11 @@
 package com.wolfhouse.modbus_simulator.service;
 
-import com.wolfhouse.modbus_simulator.WindowUtil;
 import com.wolfhouse.modbus_simulator.model.MockResponseModel;
 import com.wolfhouse.modbus_simulator.model.SimulatorModel;
 import com.wolfhouse.modbus_simulator.model.TcpDeviceModel;
 import com.wolfhouse.modbus_simulator.model.persistent.strategy.MockResponseMappingStrategy;
 import com.wolfhouse.modbus_simulator.model.persistent.strategy.TcpMappingStrategy;
+import com.wolfhouse.modbus_simulator.util.WindowUtil;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.stage.FileChooser;
@@ -53,16 +53,17 @@ public class FileService {
      *
      * @param title           文件选择器的标题
      * @param initialFileName 初始文件名
+     * @param initDir         初始目录
      * @param extensionTag    拓展名过滤器的标签名称
      * @param extension       允许的文件拓展名列表
      * @return 配置完成的 {@link FileChooser} 对象
      */
-    public static FileChooser saveFileChooser(String title, String initialFileName, String extensionTag, List<String> extension) {
+    public static FileChooser saveFileChooser(String title, String initialFileName, File initDir, String extensionTag, List<String> extension) {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(title);
         chooser.setInitialFileName(initialFileName);
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(extensionTag, extension));
-        chooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        chooser.setInitialDirectory(initDir);
         return chooser;
     }
 

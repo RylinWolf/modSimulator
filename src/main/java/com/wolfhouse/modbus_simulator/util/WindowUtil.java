@@ -1,4 +1,4 @@
-package com.wolfhouse.modbus_simulator;
+package com.wolfhouse.modbus_simulator.util;
 
 import javafx.event.EventTarget;
 import javafx.scene.Node;

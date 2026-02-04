@@ -9,7 +9,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ProgramStatusContext {
     /** 是否有未保存的更改 */
-    public static final AtomicBoolean UNSAVED = new AtomicBoolean(false);
+    public static final AtomicBoolean UNSAVED        = new AtomicBoolean(false);
+    public static final AtomicBoolean ALL_DIR_READY  = new AtomicBoolean(false);
+    public static final AtomicBoolean DATA_DIR_READY = new AtomicBoolean(false);
+    public static final AtomicBoolean LOG_DIR_READY  = new AtomicBoolean(false);
+    public static final AtomicBoolean CONF_DIR_READY = new AtomicBoolean(false);
 
     private ProgramStatusContext() {}
 
@@ -23,5 +27,37 @@ public class ProgramStatusContext {
 
     public static boolean isSaved() {
         return !UNSAVED.get();
+    }
+
+    public static void allDirReady() {
+        ALL_DIR_READY.set(true);
+    }
+
+    public static void dataDirReady() {
+        DATA_DIR_READY.set(true);
+    }
+
+    public static void logDirReady() {
+        LOG_DIR_READY.set(true);
+    }
+
+    public static void confDirReady() {
+        CONF_DIR_READY.set(true);
+    }
+
+    public static boolean isDataDirReady() {
+        return DATA_DIR_READY.get();
+    }
+
+    public static boolean isLogDirReady() {
+        return LOG_DIR_READY.get();
+    }
+
+    public static boolean isConfDirReady() {
+        return CONF_DIR_READY.get();
+    }
+
+    public static boolean isAllDirReady() {
+        return ALL_DIR_READY.get();
     }
 }

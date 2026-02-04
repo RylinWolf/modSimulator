@@ -2,6 +2,7 @@ package com.wolfhouse.modbus_simulator;
 
 import atlantafx.base.theme.CupertinoDark;
 import atlantafx.base.theme.CupertinoLight;
+import com.wolfhouse.modbus_simulator.util.WindowUtil;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -41,7 +42,7 @@ public class MainController {
     @FXML
     public void initialize() {
         themeBtn.setGraphic(new FontIcon(MaterialDesignW.WEATHER_NIGHT));
-        versionLabel.setText("Version: %s".formatted(getVersion()));
+        versionLabel.setText("Version %s".formatted(getVersion()));
         showTcpView();
 
         // 在 initialize 之后，Scene 才会附加到 contentArea 的窗口

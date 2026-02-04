@@ -15,4 +15,6 @@ module com.wolfhouse.modbus_simulator {
 
     opens com.wolfhouse.modbus_simulator to javafx.fxml;
     exports com.wolfhouse.modbus_simulator;
+    exports com.wolfhouse.modbus_simulator.util;
+    opens com.wolfhouse.modbus_simulator.util to javafx.fxml;
 }

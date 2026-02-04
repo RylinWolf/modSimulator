@@ -6,6 +6,8 @@ import com.wolfhouse.modbus_simulator.model.TcpDeviceModel;
 import com.wolfhouse.modbus_simulator.service.FileService;
 import com.wolfhouse.modbus_simulator.service.MockResponseService;
 import com.wolfhouse.modbus_simulator.service.TcpSimulatorService;
+import com.wolfhouse.modbus_simulator.util.SystemUtil;
+import com.wolfhouse.modbus_simulator.util.WindowUtil;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -207,6 +209,7 @@ public class TcpSimulatorController {
         }
         FileChooser chooser = FileService.saveFileChooser("导出配置文件",
                                                           "devices-%s".formatted(System.currentTimeMillis()),
+                                                          new File(ProgramStatusContext.isDataDirReady() ? SystemUtil.DATA_DIR_PATH : SystemUtil.USER_HOME),
                                                           "Modbus 配置文件", List.of("*.mof"));
         File file = chooser.showSaveDialog(new Stage());
         if (file == null) {
