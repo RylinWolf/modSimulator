@@ -23,6 +23,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Properties;
 
 public class MainController {
 
@@ -40,7 +41,7 @@ public class MainController {
     @FXML
     public void initialize() {
         themeBtn.setGraphic(new FontIcon(MaterialDesignW.WEATHER_NIGHT));
-        versionLabel.setText("Version: %s".formatted("1.2"));
+        versionLabel.setText("Version: %s".formatted(getVersion()));
         showTcpView();
 
         // 在 initialize 之后，Scene 才会附加到 contentArea 的窗口
@@ -48,6 +49,17 @@ public class MainController {
             applyTheme();
             setupGlobalShortcuts();
         });
+    }
+
+    private String getVersion() {
+        Properties properties = new Properties();
+        try {
+            properties.load(MainController.class.getClassLoader().getResourceAsStream("info.properties"));
+            return String.valueOf(properties.get("project.version"));
+        } catch (IOException _) {
+            // ignore
+        }
+        return "";
     }
 
     private void setupGlobalShortcuts() {

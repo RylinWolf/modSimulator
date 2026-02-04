@@ -6,13 +6,14 @@
 
     <groupId>com.wolfhouse</groupId>
     <artifactId>modbus_simulator</artifactId>
-    <version>1.2</version>
+    <version>${project.version}</version>
     <name>modbus_simulator</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.12.1</junit.version>
         <lombok.version>1.18.42</lombok.version>
+        <project.version>1.2.1</project.version>
     </properties>
 
     <dependencies>
@@ -110,6 +111,17 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/*.properties</include>
+                    <include>**/*.fxml</include>
+                    <include>**/*.css</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
