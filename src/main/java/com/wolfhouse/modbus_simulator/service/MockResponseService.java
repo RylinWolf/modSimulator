@@ -20,7 +20,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 虚拟响应服务
@@ -28,6 +27,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Rylin Wolf
  */
 public class MockResponseService {
+    private MockResponseService() {}
+
     /**
      * 显示添加或修改虚拟响应对话框
      *
@@ -35,9 +36,8 @@ public class MockResponseService {
      * @param existingResp 若为 null 则为添加，否则为修改
      */
     public static Stage showAddResponseDialog(TcpDeviceModel model, MockResponseModel existingResp) {
-        AtomicBoolean isChanged = new AtomicBoolean(false);
-        boolean       isEdit    = existingResp != null;
-        Stage         stage     = new Stage();
+        boolean isEdit = existingResp != null;
+        Stage   stage  = new Stage();
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.setTitle(isEdit ? "编辑虚拟响应" : "添加虚拟响应");
 
@@ -47,8 +47,8 @@ public class MockResponseService {
         grid.setPadding(new Insets(30));
 
         TextField nameField    = new TextField(isEdit ? existingResp.getName() : "");
-        TextField slaveIdField = new TextField(isEdit ? existingResp.getSlaveId() : "1");
-        TextField addrField    = new TextField(isEdit ? "0x" + Integer.toHexString(existingResp.getPair().registerAddr()) : "0");
+        TextField slaveIdField = new TextField(isEdit ? existingResp.getSlaveId() : "01");
+        TextField addrField    = new TextField(isEdit ? existingResp.getRegAddr() : "0x0000");
         TextField sizeField    = new TextField(isEdit ? String.valueOf(existingResp.getPair().dataSize()) : "2");
         CheckBox  randCheckBox = new CheckBox("随机数据");
         randCheckBox.setSelected(isEdit && existingResp.getPair().randData());
@@ -114,22 +114,30 @@ public class MockResponseService {
 
                 TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
                 // 更新状态
-                isChanged.set(true);
-                stage.close();
+                ProgramStatusContext.unsaved();
+                // 新增状态，则保存后立刻关闭窗口
+                if (!isEdit) {
+                    stage.close();
+                }
             } catch (Exception ex) {
                 WindowUtil.showError("输入无效", ex, stage);
             }
         };
 
-        saveBtn.setOnAction(e -> saveTask.run());
-
-        // 按下 Enter 保存，排除备注区域
+        saveBtn.setOnAction(_ -> {
+            saveTask.run();
+            stage.close();
+        });
         grid.setOnKeyPressed(event -> {
+            // 按下 Enter 保存，排除备注区域
             if (event.getCode() == KeyCode.ENTER && !remarkArea.isFocused()) {
                 saveTask.run();
                 event.consume();
+                stage.close();
             }
         });
+        // 按下 cmd+s / ctrl+s 保存
+        WindowUtil.addSaveShortcut(grid, saveTask);
 
         grid.add(saveBtn, 1, 7);
 

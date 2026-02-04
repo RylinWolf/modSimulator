@@ -28,22 +28,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TcpSimulatorController {
 
-    public static final String STATE_RUNNING = "运行中";
-    private final ObservableList<TcpDeviceModel>       devices      = DeviceManager.getInstance().getTcpDevices();
+    public static final String                               STATE_RUNNING     = "运行中";
+    private final       ObservableList<TcpDeviceModel>       devices           = DeviceManager.getInstance().getTcpDevices();
     /** 模拟器启动数量 */
-    private final AtomicInteger                        runningCount = new AtomicInteger(0);
+    private final       AtomicInteger                        runningCount      = new AtomicInteger(0);
+    /** 当前最大端口号 */
+    private final       AtomicInteger                        nextAvailablePort = new AtomicInteger(5502);
     @FXML
-    private       TableView<TcpDeviceModel>            deviceTable;
+    private             TableView<TcpDeviceModel>            deviceTable;
     @FXML
-    private       TableColumn<TcpDeviceModel, Integer> portColumn;
+    private             TableColumn<TcpDeviceModel, Integer> portColumn;
     @FXML
-    private TableColumn<TcpDeviceModel, String> statusColumn;
+    private             TableColumn<TcpDeviceModel, String>  statusColumn;
     @FXML
-    private TableColumn<TcpDeviceModel, String> nameColumn;
+    private             TableColumn<TcpDeviceModel, String>  nameColumn;
     @FXML
-    private TableColumn<TcpDeviceModel, Void>   actionsColumn;
+    private             TableColumn<TcpDeviceModel, Void>    actionsColumn;
     /** 基础窗口 */
-    private Stage                               baseStage;
+    private             Stage                                baseStage;
 
     public Stage getBaseStage() {
         if (baseStage == null) {
@@ -405,7 +407,7 @@ public class TcpSimulatorController {
         TextField nameField = new TextField(isEdit ? existingModel.getName() : "");
         nameField.setPromptText("例如：局放监测主机");
 
-        TextField portField = new TextField(isEdit ? String.valueOf(existingModel.getPort()) : "5502");
+        TextField portField = new TextField(String.valueOf(nextAvailablePort.get()));
         portField.setPromptText("默认 5502");
 
         TextArea remarkArea = new TextArea(isEdit ? existingModel.getRemark() : "");
@@ -478,23 +480,33 @@ public class TcpSimulatorController {
                     devices.add(newModel);
                 }
                 // 刷新表格和状态
+                nextAvailablePort.set(port + 1);
                 deviceTable.refresh();
                 ProgramStatusContext.unsaved();
-                stage.close();
+                // 如果是添加新设备，则保存后立刻关闭窗口
+                if (!isEdit) {
+                    stage.close();
+                }
             } catch (NumberFormatException ex) {
                 WindowUtil.showError("无效的端口号", null, baseStage);
             }
         };
 
-        saveBtn.setOnAction(_ -> saveTask.run());
+        saveBtn.setOnAction(_ -> {
+            saveTask.run();
+            stage.close();
+        });
 
         // 按下 Enter 保存，排查备注区域
         root.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER && !remarkArea.isFocused()) {
                 saveTask.run();
+                stage.close();
                 event.consume();
             }
         });
+        // 绑定保存按键
+        WindowUtil.addSaveShortcut(stage, saveTask);
 
         Scene scene = new Scene(root);
         WindowUtil.setupDialogCloseShortcuts(stage, scene);

@@ -1,5 +1,6 @@
 package com.wolfhouse.modbus_simulator;
 
+import javafx.event.EventTarget;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -9,6 +10,7 @@ import javafx.scene.control.DialogPane;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
@@ -66,19 +68,6 @@ public class WindowUtil {
         return showWaitBased(based, alert);
     }
 
-    public static void setupDialogCloseShortcuts(Stage stage, Scene scene) {
-        scene.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ESCAPE) {
-                stage.close();
-                return;
-            }
-            // 兼容 Cmd+W (Mac) 和 Alt+F4
-            KeyCombination closeCombo = new KeyCodeCombination(KeyCode.W, KeyCombination.SHORTCUT_DOWN);
-            if (closeCombo.match(event)) {
-                stage.close();
-            }
-        });
-    }
 
     /**
      * 基于某个窗口位置进行展示
@@ -117,5 +106,36 @@ public class WindowUtil {
             window.setY(centerY - pane.getHeight() / 2);
         });
         return show.showAndWait();
+    }
+
+    public static void addSaveShortcut(EventTarget target, Runnable saveAction) {
+        target.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
+            if (e.getCode() == KeyCode.S && (e.isControlDown() || e.isMetaDown())) {
+                saveAction.run();
+                e.consume();
+            }
+        });
+    }
+
+    /**
+     * 为指定的场景设置快捷键以便快速关闭窗口。
+     * 默认支持按下 Esc 键直接关闭窗口，并兼容 Mac 的 Cmd+W 和 Windows 的 Alt+F4 快捷键。
+     * 在按下这些快捷键时，会触发关闭动作。
+     *
+     * @param stage 要绑定关闭行为的窗口对象，用于关闭窗口。
+     * @param scene 与窗口关联的场景对象，用于监听键盘事件。
+     */
+    public static void setupDialogCloseShortcuts(Stage stage, Scene scene) {
+        scene.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ESCAPE) {
+                stage.close();
+                return;
+            }
+            // 兼容 Cmd+W (Mac) 和 Alt+F4
+            KeyCombination closeCombo = new KeyCodeCombination(KeyCode.W, KeyCombination.SHORTCUT_DOWN);
+            if (closeCombo.match(event)) {
+                stage.close();
+            }
+        });
     }
 }
