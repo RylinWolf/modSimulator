@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class TcpSimulatorController {
 
@@ -96,6 +97,8 @@ public class TcpSimulatorController {
                 if (event.getClickCount() == 2 && (!row.isEmpty())) {
                     TcpDeviceModel model = row.getItem();
                     if (!STATE_RUNNING.equals(model.getStatus())) {
+                        LogUtil.debug("编辑设备，port: {0}, name: {1}, remark: {2}",
+                                      model.getPort(), model.getName(), model.getRemark());
                         WindowUtil.showBased(getBaseStage(), getDeviceDialog(model));
                     }
                 }
@@ -122,7 +125,8 @@ public class TcpSimulatorController {
 
     private void onClose(WindowEvent windowEvent) {
         LogUtil.debug("触发程序关闭事件");
-        if (!ProgramStatusContext.isSaved()) {
+        // 未保存且设备列表为空，提示保存更改
+        if (!ProgramStatusContext.isSaved() && !devices.isEmpty()) {
             LogUtil.debug("检测到未保存的更改，提示用户确认退出");
             // 未保存的更改
             Optional<ButtonType> choice = WindowUtil.showAlert(Alert.AlertType.WARNING,
@@ -162,6 +166,7 @@ public class TcpSimulatorController {
 
     @FXML
     private void handleBatchStart() {
+        LogUtil.debug("执行批量启动设备");
         List<TcpDeviceModel> selected = new ArrayList<>(deviceTable.getSelectionModel().getSelectedItems());
         selected.forEach(this::startDevice);
         deviceTable.refresh();
@@ -169,6 +174,7 @@ public class TcpSimulatorController {
 
     @FXML
     private void handleBatchStop() {
+        LogUtil.debug("执行批量停止设备");
         List<TcpDeviceModel> selected = new ArrayList<>(deviceTable.getSelectionModel().getSelectedItems());
         selected.forEach(this::stopDevice);
         deviceTable.refresh();
@@ -180,7 +186,7 @@ public class TcpSimulatorController {
         if (selected.isEmpty()) {
             return;
         }
-
+        LogUtil.debug("执行批量删除设备，选中 {0} 项", selected.size());
         Optional<ButtonType> result = WindowUtil.showAlert(Alert.AlertType.CONFIRMATION,
                                                            "确认删除",
                                                            "确认删除选中的 " + selected.size() + " 个设备？",
@@ -189,29 +195,36 @@ public class TcpSimulatorController {
         if (result.isPresent() && result.get() == ButtonType.OK) {
             ProgramStatusContext.saved();
             selected.forEach(model -> {
+                LogUtil.debug("停止设备 - {0}", model);
                 stopDevice(model);
+                LogUtil.debug("删除设备 - {0}", model);
                 devices.remove(model);
             });
         }
+        LogUtil.info("批量删除设备 {0} 项", selected.size());
     }
 
     @FXML
     private void handleImportConf() {
-        Stage stage = new Stage();
+        LogUtil.debug("执行导入配置文件");
         FileChooser chooser = FileService.loadFileChooser("导入配置文件",
                                                           "modbus 配置文件",
                                                           List.of("*.mof"),
-                                                          null);
-        List<File> files = chooser.showOpenMultipleDialog(stage);
+                                                          SystemUtil.DATA_DIR_PATH);
+        List<File> files = chooser.showOpenMultipleDialog(new Stage());
         if (files == null) {
+            LogUtil.debug("用户取消导入操作");
             return;
         }
-        FileService.importConf(files, baseStage);
+        FileService.importModelFiles(files, baseStage);
+        LogUtil.info("导入配置文件: {0}", files.stream().map(File::getAbsolutePath).collect(Collectors.joining(", ")));
     }
 
     @FXML
     private void handleExportConf() {
+        LogUtil.debug("执行导出 TCP 设备文件");
         if (devices.isEmpty()) {
+            LogUtil.debug("没有可导出的 TCP 设备");
             WindowUtil.showAlert(Alert.AlertType.INFORMATION, "提示", "没有可导出的配置项",
                                  null, baseStage, ButtonType.OK);
             return;
@@ -222,9 +235,10 @@ public class TcpSimulatorController {
                                                           "Modbus 配置文件", List.of("*.mof"));
         File file = chooser.showSaveDialog(new Stage());
         if (file == null) {
+            LogUtil.debug("用户取消导出操作");
             return;
         }
-        System.out.printf("导出配置文件: %s%n", file.getAbsolutePath());
+        LogUtil.info("导出 TCP 设备列表文件: {0}", file.getAbsolutePath());
         if (FileService.exportConf(file, devices.stream().toList(), baseStage)) {
             // 导出成功，修改保存状态
             ProgramStatusContext.saved();
@@ -274,7 +288,7 @@ public class TcpSimulatorController {
 
                 deleteBtn.setOnAction(event -> {
                     TcpDeviceModel model = getTableView().getItems().get(getIndex());
-
+                    LogUtil.debug("执行删除设备, port: {0}, name: {1}", model.getPort(), model.getName());
                     Optional<ButtonType> result = WindowUtil.showAlert(Alert.AlertType.CONFIRMATION,
                                                                        "确定删除",
                                                                        "确认删除设备?",
@@ -284,8 +298,11 @@ public class TcpSimulatorController {
                     if (result.isPresent() && result.get() == ButtonType.OK) {
                         stopDevice(model);
                         devices.remove(model);
+                        LogUtil.info("设备删除成功, port: {0}, name: {1}", model.getPort(), model.getName());
                         ProgramStatusContext.unsaved();
+                        return;
                     }
+                    LogUtil.debug("取消删除设备操作");
                 });
             }
 
@@ -381,6 +398,7 @@ public class TcpSimulatorController {
         if (STATE_RUNNING.equals(model.getStatus())) {
             return;
         }
+        LogUtil.debug("执行启动设备 - {0}", model);
         try {
             ModbusTcpSimulator simulator = new ModbusTcpSimulator(model.getPort());
             simulator.setLogConsumer(model::appendLog);
@@ -389,22 +407,27 @@ public class TcpSimulatorController {
             model.setSimulator(simulator);
             model.setStatus(STATE_RUNNING);
             runningCount.incrementAndGet();
+            LogUtil.info("设备成功启动 - {0}", model);
         } catch (IOException e) {
+            LogUtil.error("设备启动失败 - {0}, err: {1}", model, e);
             WindowUtil.showError("启动失败: " + e.getMessage(), e, baseStage);
         }
     }
 
     private void stopDevice(TcpDeviceModel model) {
+        LogUtil.debug("执行停止设备 - {0}", model);
         if (model.getSimulator() != null) {
             model.getSimulator().stop();
             model.setSimulator(null);
         }
         model.setStatus("已停止");
         runningCount.decrementAndGet();
+        LogUtil.info("设备成功停止 - {0}", model);
     }
 
     @FXML
     private void handleAddDevice() {
+        LogUtil.debug("执行添加设备对话框");
         WindowUtil.showBased(getBaseStage(), getDeviceDialog(null));
     }
 
@@ -471,6 +494,8 @@ public class TcpSimulatorController {
         root.getChildren().addAll(titleLabel, grid, footer);
 
         Runnable saveTask = () -> {
+            LogUtil.debug("保存设备配置, port: {0}, name: {1}, remark: {2}",
+                          portField.getText(), nameField.getText(), remarkArea.getText());
             try {
                 int port = Integer.parseInt(portField.getText());
                 if (port > 0xFFFF || port < 0) {
@@ -507,9 +532,13 @@ public class TcpSimulatorController {
                 ProgramStatusContext.unsaved();
                 // 如果是添加新设备，则保存后立刻关闭窗口
                 if (!isEdit) {
+                    LogUtil.info("设备添加成功, port: {0}, name: {1}", port, nameField.getText());
                     stage.close();
+                    return;
                 }
+                LogUtil.info("设备保存成功, port: {0}, name: {1}", port, nameField.getText());
             } catch (NumberFormatException ex) {
+                LogUtil.error("无效的端口号, port: {0}, name: {1}", portField.getText(), nameField.getText());
                 WindowUtil.showError("无效的端口号", null, baseStage);
             }
         };
@@ -535,6 +564,4 @@ public class TcpSimulatorController {
         stage.setScene(scene);
         return stage;
     }
-
-
 }

@@ -4,6 +4,7 @@ import com.wolfhouse.mod4j.utils.ModbusTcpSimulator;
 import com.wolfhouse.modbus_simulator.model.MockResponseModel;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,10 +33,12 @@ public class MockResponseMappingStrategy implements ModelMappingStrategy<MockRes
     }
 
     private static Map<String, Object> getPairMap(ModbusTcpSimulator.MockRespPair pair) {
-        return Map.ofEntries(Map.entry(ADDR, pair.registerAddr()),
-                             Map.entry(DATA_SIZE, pair.dataSize()),
-                             Map.entry(RAND_DATA, pair.randData()),
-                             Map.entry(DATA, pair.data()));
+        HashMap<String, Object> pairMap = HashMap.newHashMap(4);
+        pairMap.put(ADDR, pair.registerAddr());
+        pairMap.put(DATA_SIZE, pair.dataSize());
+        pairMap.put(RAND_DATA, pair.randData());
+        pairMap.put(DATA, pair.data());
+        return pairMap;
     }
 
     private static ModbusTcpSimulator.MockRespPair getPair(Map<String, Object> map) {

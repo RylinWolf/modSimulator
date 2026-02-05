@@ -57,7 +57,7 @@ public class ConfUtil {
         }
         // 2. 不存在则根据模板创建
         LogUtil.info("核心配置文件不存在，正在尝试初始化");
-        InputStream ins = ConfUtil.class.getClassLoader().getResourceAsStream(AppConf.APP_CONF_CORE_TEMPLATE_NAME);
+        InputStream ins = ConfUtil.class.getClassLoader().getResourceAsStream(AppConf.APP_CONF_CORE_TEMPLATE);
         if (ins == null) {
             LogUtil.error("核心配置文件模板不存在，无法初始化核心配置文件");
             return new FileNotFoundException("核心配置文件模板不存在");

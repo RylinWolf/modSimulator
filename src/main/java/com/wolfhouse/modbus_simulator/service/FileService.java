@@ -5,6 +5,8 @@ import com.wolfhouse.modbus_simulator.model.SimulatorModel;
 import com.wolfhouse.modbus_simulator.model.TcpDeviceModel;
 import com.wolfhouse.modbus_simulator.model.persistent.strategy.MockResponseMappingStrategy;
 import com.wolfhouse.modbus_simulator.model.persistent.strategy.TcpMappingStrategy;
+import com.wolfhouse.modbus_simulator.util.LogUtil;
+import com.wolfhouse.modbus_simulator.util.SystemUtil;
 import com.wolfhouse.modbus_simulator.util.WindowUtil;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -44,7 +46,7 @@ public class FileService {
         FileChooser.ExtensionFilter filters = new FileChooser.ExtensionFilter(extensionTag, extension);
         chooser.getExtensionFilters().add(filters);
         chooser.setSelectedExtensionFilter(filters);
-        chooser.setInitialDirectory(new File(initialDir == null ? System.getProperty("user.dir") : initialDir));
+        chooser.setInitialDirectory(new File(initialDir == null ? SystemUtil.DATA_DIR_PATH : initialDir));
         return chooser;
     }
 
@@ -85,10 +87,12 @@ public class FileService {
                 throw new IOException("无法创建新文件");
             }
         } catch (IOException e) {
+            LogUtil.error("文件创建失败", e);
             WindowUtil.showError("文件创建失败", e, baseStage);
             return false;
         }
         if (!file.canWrite() && !file.setWritable(true)) {
+            LogUtil.error("文件无写入权限");
             WindowUtil.showError("文件无写入权限", null, baseStage);
             return false;
         }
@@ -99,6 +103,7 @@ public class FileService {
         if (!writeDevice(objs, file, baseStage, aClass)) {
             return false;
         }
+        LogUtil.info("TCP 设备列表文件导出成功");
         WindowUtil.showAlert(Alert.AlertType.INFORMATION, "导出成功", "文件导出成功",
                              null, baseStage, ButtonType.OK);
         return true;
@@ -111,7 +116,7 @@ public class FileService {
      * @param baseStage 基础窗口对象，用于展示导入结果的提示框。如果部分文件导入失败，提示框会显示具体失败原因。
      * @return 如果所有文件均成功导入，则返回 true；如果任意文件导入失败，则返回 false。
      */
-    public static boolean importConf(List<File> files, Stage baseStage) {
+    public static boolean importModelFiles(List<File> files, Stage baseStage) {
         if (files == null || files.isEmpty()) {
             return true;
         }
@@ -141,11 +146,13 @@ public class FileService {
             StringBuilder sb = new StringBuilder("以下文件导入失败：\n");
             failedFiles.forEach(ff -> sb.append(ff.filepath()).append(": ").append(ff.cause()).append("\n"));
             WindowUtil.showError("导入部分失败", new Exception(sb.toString()), baseStage);
+            LogUtil.error("导入部分失败，失败文件：{0}", sb);
             return false;
         }
 
         WindowUtil.showAlert(Alert.AlertType.INFORMATION, "导入成功", "所有配置文件导入成功",
                              null, baseStage, ButtonType.OK);
+        LogUtil.debug("所有文件导入成功");
         return true;
     }
 
@@ -154,6 +161,16 @@ public class FileService {
         com.wolfhouse.modbus_simulator.DeviceManager.getInstance().getTcpDevices().addAll(devices);
     }
 
+    /**
+     * 将设备对象列表序列化并写入到指定文件中。
+     *
+     * @param objs      要写入的设备对象列表，列表中的每个对象类型必须是 {@link SimulatorModel} 的子类。
+     * @param file      写入的目标文件，需为有效的文件路径且可写。
+     * @param baseStage 基础窗口对象，用于显示错误提示信息。
+     * @param clazz     设备对象的类类型，用于指定不同的映射策略。
+     * @param <T>       设备对象的具体类型，必须扩展自 {@link SimulatorModel}。
+     * @return 如果写入成功则返回 true；如果出现任何错误则返回 false。
+     */
     private static <T extends SimulatorModel> boolean writeDevice(List<T> objs, File file, Stage baseStage, Class<T> clazz) {
         try (FileOutputStream fos = new FileOutputStream(file);
              ObjectOutputStream oos = new ObjectOutputStream(fos)) {
@@ -170,13 +187,19 @@ public class FileService {
             oos.writeObject(maps);
 
         } catch (FileNotFoundException e) {
+            LogUtil.error("文件不存在", e);
             WindowUtil.showError("文件不存在", e, baseStage);
             return false;
         } catch (IOException e) {
+            LogUtil.error("文件写入失败", e);
             WindowUtil.showError("文件写入失败", e, baseStage);
             return false;
+        } catch (Exception e) {
+            LogUtil.error("文件写入失败", e);
+            WindowUtil.showError("文件写入失败，未知错误", e, baseStage);
+            return false;
         }
-
+        LogUtil.debug("文件写入结束");
         return true;
     }
 

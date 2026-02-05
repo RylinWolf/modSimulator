@@ -22,7 +22,7 @@ import java.util.stream.Stream;
  */
 public class LogUtil {
     private static final DateTimeFormatter FILE_NAME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final DateTimeFormatter LOG_TIME_FORMATTER  = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+    private static final DateTimeFormatter LOG_TIME_FORMATTER  = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private static Path    currentLogFile;
     private static boolean initialized = false;

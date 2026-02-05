@@ -1,4 +1,6 @@
 cd ../..
+echo "[modbus-simulator] 执行 maven 操作..."
+mvn clean package
 echo "[modbus-simulator] 正在构建..."
 jpackage \
   --type dmg \

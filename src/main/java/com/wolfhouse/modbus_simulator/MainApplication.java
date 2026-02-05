@@ -54,6 +54,8 @@ public class MainApplication extends Application {
     }
 
     private void initApplication(Stage stage) {
+        // 修改进程名称
+        Thread.currentThread().setName("JavaFX");
         // 0. 初始化日志工具
         final Exception logInitE = SystemUtil.initLogDir();
         if (logInitE != null) {
