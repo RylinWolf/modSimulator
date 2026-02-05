@@ -55,15 +55,30 @@ public class MainApplication extends Application {
 
     private void initApplication(Stage stage) {
         // 0. 初始化日志工具
-        Exception logDirE = SystemUtil.initLogDir();
-        if (logDirE != null) {
-            Platform.runLater(() -> WindowUtil.showError("日志目录初始化失败", logDirE, stage));
+        final Exception logInitE = SystemUtil.initLogDir();
+        if (logInitE != null) {
+            Platform.runLater(() -> WindowUtil.showError("日志目录初始化失败", logInitE, stage));
         }
         LogUtil.init(stage);
         LogUtil.info("程序启动...");
 
-        // 1. 初始化各目录
-        // 虚拟线程初始化目录
+        // 1. 初始化配置文件目录
+        final Exception confInitE = ConfUtil.init();
+        if (confInitE != null) {
+            Platform.runLater(() -> WindowUtil.showError("配置文件目录初始化失败", confInitE, stage));
+        }
+        // 2. 初始化核心配置文件
+        if (!initCoreConf()) {
+            LogUtil.error("未能成功加载核心配置文件，程序无法启动");
+            stage.close();
+            Platform.exit();
+            System.exit(1);
+            return;
+        }
+        // 核心配置加载完毕
+        ProgramStatusContext.coreConfLoaded();
+
+        // 3. 虚拟线程初始化其他目录
         Map<String, Exception> initConfErr = initDirs();
         if (!initConfErr.isEmpty()) {
             StringBuilder sb = new StringBuilder();
@@ -75,27 +90,15 @@ public class MainApplication extends Application {
                                                          stage,
                                                          ButtonType.OK));
         }
-        // 目录就绪
-        ProgramStatusContext.allDirReady();
-        // 2. 初始化核心配置文件
-        if (!initCoreConf()) {
-            LogUtil.error("未能成功加载核心配置文件，程序无法启动");
-            stage.close();
-            Platform.exit();
-            System.exit(1);
-            return;
-        }
-
     }
 
     /**
-     * 初始化程序所需目录
+     * 初始化程序所需目录（除去日志、核心配置）
      *
      * @return 初始化过程中的异常
      */
     private Map<String, Exception> initDirs() {
-        Map<String, Exception> res = HashMap.newHashMap(3);
-        res.put(AppDirs.CONFIG_DIR_NAME, ConfUtil.init());
+        Map<String, Exception> res = HashMap.newHashMap(1);
         res.put(AppDirs.DATA_DIR_NAME, SystemUtil.initDataDir());
         res.values().removeIf(Objects::isNull);
         return res;

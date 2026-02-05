@@ -48,7 +48,7 @@ public class ConfUtil {
         // 1. 检查文件是否存在
         Path coreConfPath = Path.of(CORE_CONF_PATH);
         if (Files.exists(coreConfPath) && Files.isRegularFile(coreConfPath)) {
-            LogUtil.debug("核心配置文件已存在，不再初始化");
+            LogUtil.info("核心配置文件已存在，不再初始化");
             return null;
         }
         if (!Files.exists(Path.of(CONFIG_DIR_PATH))) {

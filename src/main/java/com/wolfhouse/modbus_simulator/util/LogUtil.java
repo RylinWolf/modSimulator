@@ -67,7 +67,10 @@ public class LogUtil {
     }
 
     public static void debug(String format, Object... args) {
-        if (ProgramStatusContext.isDebug()) {
+        if (!ProgramStatusContext.isLogDirReady()
+                || !ProgramStatusContext.isCoreConfLoaded()
+                || ProgramStatusContext.isDebug()) {
+            // 日志目录未准备好、配置文件目录未准备好、配置文件未加载完毕或开启调试模式时，输出调试信息
             log("DEBUG", format, args);
         }
     }
