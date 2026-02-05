@@ -16,7 +16,6 @@ public class TcpMappingStrategy implements ModelMappingStrategy<TcpDeviceModel> 
     public static final String NAME           = "name";
     public static final String PORT           = "port";
     public static final String REMARK         = "remark";
-    public static final String STATUS         = "status";
     public static final String LOGS           = "logs";
     public static final String MOCK_RESPONSES = "mockResponses";
 
@@ -31,7 +30,6 @@ public class TcpMappingStrategy implements ModelMappingStrategy<TcpDeviceModel> 
         return Map.ofEntries(Map.entry(NAME, model.getName()),
                              Map.entry(PORT, model.getPort()),
                              Map.entry(REMARK, model.getRemark()),
-                             Map.entry(STATUS, model.getStatus()),
                              Map.entry(LOGS, model.getLogs()),
                              Map.entry(MOCK_RESPONSES,
                                        MockResponseMappingStrategy
@@ -49,7 +47,6 @@ public class TcpMappingStrategy implements ModelMappingStrategy<TcpDeviceModel> 
         TcpDeviceModel model = new TcpDeviceModel((int) map.get(PORT));
         model.setName((String) map.get(NAME));
         model.setRemark((String) map.get(REMARK));
-        model.setStatus((String) map.get(STATUS));
         model.setLogs((String) map.get(LOGS));
         model.getMockResponses()
              .addAll(MockResponseMappingStrategy

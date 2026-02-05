@@ -43,7 +43,6 @@ public class MainApplication extends Application {
 
         // 执行初始化
         initApplication(stage);
-
     }
 
 
