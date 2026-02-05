@@ -106,7 +106,7 @@ public class MockResponseService {
                     existingResp.setDataType(rand ? "随机" : "固定");
                     existingResp.setRegAddr(addrField.getText());
                 } else {
-                    MockResponseModel respModel = new MockResponseModel(slaveIdField.getText(), pair);
+                    MockResponseModel respModel = new MockResponseModel(slaveIdField.getText(), addrField.getText(), pair);
                     respModel.setName(nameField.getText());
                     respModel.setRemark(remarkArea.getText());
                     model.getMockResponses().add(respModel);

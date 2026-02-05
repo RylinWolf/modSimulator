@@ -282,8 +282,8 @@ public class TcpSimulatorController {
                 consoleBtn.setOnAction(event -> {
                     TcpDeviceModel model = getTableView().getItems().get(getIndex());
                     Stage          stage = TcpSimulatorService.showConsoleDialog(model);
-                    // 基于当前目录展示
-                    WindowUtil.showBased(getBaseStage(), stage);
+                    // 基于当前目录展示，但不绑定 Owner 以免在 macOS 上跨桌面显示异常
+                    WindowUtil.showBased(getBaseStage(), stage, false);
                 });
 
                 deleteBtn.setOnAction(event -> {

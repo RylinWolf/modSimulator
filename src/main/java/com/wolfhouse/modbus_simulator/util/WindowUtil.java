@@ -69,14 +69,22 @@ public class WindowUtil {
     }
 
 
+    public static void showBased(Window based, Stage show) {
+        showBased(based, show, true);
+    }
+
     /**
      * 基于某个窗口位置进行展示
      *
-     * @param based 窗口位置基准
-     * @param show  要展示的窗口
+     * @param based     窗口位置基准
+     * @param show      要展示的窗口
+     * @param bindOwner 是否绑定 Owner。如果为 true，则窗口会跟随 Owner；
+     *                  如果为 false，窗口将作为独立窗口，但初始位置仍基于 based。
      */
-    public static void showBased(Window based, Stage show) {
-        show.initOwner(based);
+    public static void showBased(Window based, Stage show, boolean bindOwner) {
+        if (bindOwner) {
+            show.initOwner(based);
+        }
         show.sizeToScene();
 
         double centerX = based.getX() + based.getWidth() / 2;

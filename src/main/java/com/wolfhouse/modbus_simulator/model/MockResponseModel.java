@@ -16,10 +16,10 @@ public class MockResponseModel implements SimulatorModel {
     private final StringProperty                                  dataType = new SimpleStringProperty("固定");
     private final ObjectProperty<ModbusTcpSimulator.MockRespPair> pair     = new SimpleObjectProperty<>();
 
-    public MockResponseModel(String slaveId, ModbusTcpSimulator.MockRespPair pair) {
+    public MockResponseModel(String slaveId, String regAddr, ModbusTcpSimulator.MockRespPair pair) {
         this.slaveId.set(slaveId);
         this.pair.set(pair);
-        this.regAddr.set(String.format("%04x", pair.registerAddr()));
+        this.regAddr.set(regAddr);
         this.dataSize.set(String.valueOf(pair.dataSize()));
         this.dataType.set(pair.randData() ? "随机" : "固定");
     }

@@ -65,6 +65,7 @@ public class MockResponseMappingStrategy implements ModelMappingStrategy<MockRes
     @Override
     public MockResponseModel read(Map<String, Object> map) {
         MockResponseModel model = new MockResponseModel((String) map.get(SLAVE_ID),
+                                                        (String) map.get(ADDR),
                                                         getPair((Map<String, Object>) map.get(MOCK_RESP_PAIR)));
         model.setName((String) map.get(NAME));
         model.setRemark((String) map.get(REMARK));
