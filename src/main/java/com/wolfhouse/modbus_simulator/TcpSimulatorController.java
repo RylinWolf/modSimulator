@@ -6,6 +6,7 @@ import com.wolfhouse.modbus_simulator.model.TcpDeviceModel;
 import com.wolfhouse.modbus_simulator.service.FileService;
 import com.wolfhouse.modbus_simulator.service.MockResponseService;
 import com.wolfhouse.modbus_simulator.service.TcpSimulatorService;
+import com.wolfhouse.modbus_simulator.util.LogUtil;
 import com.wolfhouse.modbus_simulator.util.SystemUtil;
 import com.wolfhouse.modbus_simulator.util.WindowUtil;
 import javafx.application.Platform;
@@ -120,34 +121,42 @@ public class TcpSimulatorController {
     }
 
     private void onClose(WindowEvent windowEvent) {
+        LogUtil.debug("触发程序关闭事件");
         if (!ProgramStatusContext.isSaved()) {
+            LogUtil.debug("检测到未保存的更改，提示用户确认退出");
             // 未保存的更改
             Optional<ButtonType> choice = WindowUtil.showAlert(Alert.AlertType.WARNING,
                                                                "警告",
                                                                "未保存的更改",
-                                                               "未保存的修改将丢失，是否继续关闭？",
+                                                               "未保存的修改将丢失，是否继续退出？",
                                                                baseStage, ButtonType.YES, ButtonType.NO);
             if (choice.isEmpty() || choice.get() == ButtonType.NO) {
+                LogUtil.debug("用户选择取消关闭，保留未保存的更改");
                 windowEvent.consume();
                 return;
             }
         }
         // 有正在运行的模拟器
         if (runningCount.get() > 0) {
+            LogUtil.debug("检测到正在运行的模拟器，提示用户确认退出");
             Optional<ButtonType> result = WindowUtil.showAlert(Alert.AlertType.CONFIRMATION,
                                                                "确认退出",
                                                                "确认退出 Modbus 模拟器？",
                                                                "退出后所有正在运行的模拟设备都将停止",
                                                                baseStage, ButtonType.OK, ButtonType.CANCEL);
             if (result.isEmpty() || result.get() == ButtonType.CANCEL) {
+                LogUtil.debug("用户选择取消关闭，保留正在运行的模拟器");
                 // 消费关闭事件
                 windowEvent.consume();
                 return;
             }
         }
         // 停止所有设备后再退出
+        LogUtil.debug("程序关闭，停止模拟器...");
         DeviceManager.getInstance().stopAll();
+        LogUtil.debug("模拟器已停止，程序退出...");
         Platform.exit();
+        LogUtil.info("程序停止...");
         System.exit(0);
     }
 

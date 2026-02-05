@@ -1,43 +1,43 @@
 package com.wolfhouse.modbus_simulator.util;
 
+import com.wolfhouse.modbus_simulator.meta.AppDirs;
+import com.wolfhouse.modbus_simulator.meta.AppInfo;
 import com.wolfhouse.modbus_simulator.model.ProgramStatusContext;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.Properties;
+
+import static com.wolfhouse.modbus_simulator.meta.AppConf.APP_NAME;
 
 /**
  * 系统工具类
  *
  * @author Rylin Wolf
  */
-@SuppressWarnings("all")
+@SuppressWarnings({"unused", "UnusedReturnValue", "magic"})
 public class SystemUtil {
-    /** APP 名称 */
-    public static final String APP_NAME  = "ModbusSimulator";
     /** 系统名称 */
     public static final String OS_NAME   = System.getProperty("os.name").toLowerCase();
     /** 用户目录路径 */
     public static final String USER_HOME = System.getProperty("user.home");
 
-    /** 配置文件目录名 */
-    public static final String CONFIG_DIR_NAME = "conf";
-    /** 数据目录名 */
-    public static final String DATA_DIR_NAME   = "data";
-    /** 日志目录名 */
-    public static final String LOG_DIR_NAME    = "logs";
-
     /** 系统枚举类型 */
-    public static final OS     OS_TYPE         = getOsType();
+    public static final OS     OS_TYPE     = getOsType();
     /** AppData 目录路径 */
-    public static final String APPDATA_DIR     = getAppDataDir().toAbsolutePath().toString();
-    /** 配置文件目录路径 */
-    public static final String CONFIG_DIR_PATH = Path.of(APPDATA_DIR, CONFIG_DIR_NAME).toString();
+    public static final String APPDATA_DIR = getAppDataDir().toAbsolutePath().toString();
+
     /** 数据目录路径 */
-    public static final String DATA_DIR_PATH   = Path.of(APPDATA_DIR, DATA_DIR_NAME).toString();
+    public static final String DATA_DIR_PATH = Path.of(APPDATA_DIR, AppDirs.DATA_DIR_NAME).toString();
     /** 日志目录路径 */
-    public static final String LOG_DIR_PATH    = Path.of(APPDATA_DIR, LOG_DIR_NAME).toString();
+    public static final String LOG_DIR_PATH  = Path.of(APPDATA_DIR, AppDirs.LOG_DIR_NAME).toString();
+
 
     public static Path getAppDataDir() {
         return switch (OS_TYPE) {
@@ -48,9 +48,7 @@ public class SystemUtil {
                 }
                 yield Paths.get(USER_HOME, "AppData", "Roaming", APP_NAME);
             }
-            case MACOS -> {
-                yield Paths.get(USER_HOME, "Library", "Application Support", APP_NAME);
-            }
+            case MACOS -> Paths.get(USER_HOME, "Library", "Application Support", APP_NAME);
             case LINUX -> {
                 String xdgConfig = System.getenv("XDG_CONFIG_HOME");
                 if (xdgConfig != null) {
@@ -58,10 +56,9 @@ public class SystemUtil {
                 }
                 yield Paths.get(USER_HOME, ".config", APP_NAME.toLowerCase());
             }
-            default -> {
-                // 兜底，用户目录下隐藏文件夹
-                yield Paths.get(USER_HOME, "." + APP_NAME.toLowerCase());
-            }
+            // 兜底，用户目录下隐藏文件夹
+            default -> Paths.get(USER_HOME, "." + APP_NAME.toLowerCase());
+
         };
     }
 
@@ -79,7 +76,7 @@ public class SystemUtil {
     public static Exception mkdirs(Path dir) {
         if (!Files.exists(dir) || !Files.isDirectory(dir)) {
             try {
-                System.out.printf("创建目录[%s]%n", dir.toAbsolutePath());
+                LogUtil.info("创建目录[{0}]", dir.toAbsolutePath());
                 Files.createDirectories(dir);
             } catch (IOException e) {
                 return e;
@@ -87,10 +84,10 @@ public class SystemUtil {
             if (!Files.exists(dir)) {
                 return new IOException("未知原因");
             }
-            System.out.printf("成功创建目录[%s]%n", dir.toAbsolutePath());
+            LogUtil.info("成功创建目录[{0}]", dir.toAbsolutePath());
             return null;
         }
-        System.out.printf("目录[%s]已存在，跳过创建%n", dir.toAbsolutePath());
+        LogUtil.debug("目录[{0}]已存在，跳过创建", dir.toAbsolutePath());
         return null;
     }
 
@@ -102,13 +99,6 @@ public class SystemUtil {
         return e;
     }
 
-    public static Exception initConfDir() {
-        Exception e = mkdirs(Path.of(CONFIG_DIR_PATH));
-        if (e == null) {
-            ProgramStatusContext.confDirReady();
-        }
-        return e;
-    }
 
     public static Exception initDataDir() {
         Exception e = mkdirs(Path.of(DATA_DIR_PATH));
@@ -117,6 +107,43 @@ public class SystemUtil {
         }
         return e;
     }
+
+    public static Optional<Properties> getAppInfoProperties() {
+        return getClassPathProperties(AppInfo.APP_INFO_PROPERTIES);
+    }
+
+    public static String getVersion() {
+        Optional<Properties> prop = getAppInfoProperties();
+        if (prop.isPresent()) {
+            return prop.get().getProperty(AppInfo.APP_INFO_VERSION);
+        }
+        return "";
+    }
+
+    public static Optional<Properties> getProperties(InputStream inputStream) {
+        Properties properties = new Properties();
+        try {
+            properties.load(inputStream);
+        } catch (IOException e) {
+            LogUtil.error("加载属性文件失败", e);
+            return Optional.empty();
+        }
+        return Optional.of(properties);
+    }
+
+    public static Optional<Properties> getClassPathProperties(String resourcePath) {
+        return getProperties(SystemUtil.class.getClassLoader().getResourceAsStream(resourcePath));
+    }
+
+    public static Optional<Properties> getProperties(String abstractPath) {
+        try {
+            return getProperties(new FileInputStream(abstractPath));
+        } catch (FileNotFoundException e) {
+            LogUtil.error("文件不存在: {0}, error: {1}", abstractPath, e);
+            return Optional.empty();
+        }
+    }
+
 
     public enum OS {
         /** 操作系统类型 */

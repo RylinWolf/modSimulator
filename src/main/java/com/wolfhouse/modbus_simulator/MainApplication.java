@@ -1,10 +1,15 @@
 package com.wolfhouse.modbus_simulator;
 
 import atlantafx.base.theme.CupertinoDark;
+import com.wolfhouse.modbus_simulator.meta.AppConf;
+import com.wolfhouse.modbus_simulator.meta.AppDirs;
 import com.wolfhouse.modbus_simulator.model.ProgramStatusContext;
+import com.wolfhouse.modbus_simulator.util.ConfUtil;
+import com.wolfhouse.modbus_simulator.util.LogUtil;
 import com.wolfhouse.modbus_simulator.util.SystemUtil;
 import com.wolfhouse.modbus_simulator.util.WindowUtil;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -36,28 +41,51 @@ public class MainApplication extends Application {
         stage.setScene(scene);
         stage.show();
 
-        // 虚拟线程初始化目录
-        Thread.startVirtualThread(() -> {
-            Map<String, Exception> initConfErr = initDirs();
-            if (!initConfErr.isEmpty()) {
-                StringBuilder sb = new StringBuilder();
-                initConfErr.forEach((k, v) -> sb.append(k).append(": ").append(v.getMessage()).append("\n"));
-                WindowUtil.showAlert(Alert.AlertType.ERROR,
-                                     "初始化目录失败",
-                                     sb.toString(),
-                                     null,
-                                     stage,
-                                     ButtonType.OK);
-            }
-            // 目录就绪
-            ProgramStatusContext.allDirReady();
-        });
+        // 执行初始化
+        initApplication(stage);
+
     }
+
 
     @Override
     public void stop() throws Exception {
         DeviceManager.getInstance().stopAll();
         super.stop();
+    }
+
+    private void initApplication(Stage stage) {
+        // 0. 初始化日志工具
+        Exception logDirE = SystemUtil.initLogDir();
+        if (logDirE != null) {
+            Platform.runLater(() -> WindowUtil.showError("日志目录初始化失败", logDirE, stage));
+        }
+        LogUtil.init(stage);
+        LogUtil.info("程序启动...");
+
+        // 1. 初始化各目录
+        // 虚拟线程初始化目录
+        Map<String, Exception> initConfErr = initDirs();
+        if (!initConfErr.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            initConfErr.forEach((k, v) -> sb.append(k).append(": ").append(v.getMessage()).append("\n"));
+            Platform.runLater(() -> WindowUtil.showAlert(Alert.AlertType.ERROR,
+                                                         "初始化目录失败",
+                                                         sb.toString(),
+                                                         null,
+                                                         stage,
+                                                         ButtonType.OK));
+        }
+        // 目录就绪
+        ProgramStatusContext.allDirReady();
+        // 2. 初始化核心配置文件
+        if (!initCoreConf()) {
+            LogUtil.error("未能成功加载核心配置文件，程序无法启动");
+            stage.close();
+            Platform.exit();
+            System.exit(1);
+            return;
+        }
+
     }
 
     /**
@@ -67,10 +95,27 @@ public class MainApplication extends Application {
      */
     private Map<String, Exception> initDirs() {
         Map<String, Exception> res = HashMap.newHashMap(3);
-        res.put(SystemUtil.LOG_DIR_NAME, SystemUtil.initLogDir());
-        res.put(SystemUtil.CONFIG_DIR_NAME, SystemUtil.initConfDir());
-        res.put(SystemUtil.DATA_DIR_NAME, SystemUtil.initDataDir());
+        res.put(AppDirs.CONFIG_DIR_NAME, ConfUtil.init());
+        res.put(AppDirs.DATA_DIR_NAME, SystemUtil.initDataDir());
         res.values().removeIf(Objects::isNull);
         return res;
+    }
+
+    /**
+     * 初始化核心配置文件
+     *
+     * @return 是否初始化成功
+     */
+    private boolean initCoreConf() {
+        Properties coreConf = ConfUtil.getCoreConf().orElse(null);
+        if (coreConf == null) {
+            return false;
+        }
+        // 调试模式
+        if (Boolean.parseBoolean(coreConf.getProperty(AppConf.APP_CONF_DEBUG_ENABLED))) {
+            ProgramStatusContext.debug();
+            LogUtil.debug("调试模式已启动");
+        }
+        return true;
     }
 }

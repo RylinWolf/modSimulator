@@ -26,6 +26,7 @@ import java.util.Optional;
  *
  * @author Rylin Wolf
  */
+@SuppressWarnings({"unchecked"})
 public class MockResponseService {
     private MockResponseService() {}
 
@@ -291,6 +292,27 @@ public class MockResponseService {
         typeCol.setPrefWidth(100);
         typeCol.setCellValueFactory(data -> data.getValue().dataTypeProperty());
 
+        TableColumn<MockResponseModel, Void> actionCol = getActionCol(model, stage, isRunning);
+
+        respTable.getColumns().addAll(enabledCol, nameCol, slaveCol, addrCol, sizeCol, typeCol, actionCol);
+        root.getChildren().addAll(headerPanel, respTable);
+        respTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+
+        model.getMockResponses().forEach(r -> r.enabledProperty().addListener((obs, old, val) -> {
+            TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
+        }));
+
+        Scene scene = new Scene(root);
+        WindowUtil.setupDialogCloseShortcuts(stage, scene);
+        URL resource = MockResponseService.class.getResource("style.css");
+        if (resource != null) {
+            scene.getStylesheets().add(resource.toExternalForm());
+        }
+        stage.setScene(scene);
+        return stage;
+    }
+
+    private static TableColumn<MockResponseModel, Void> getActionCol(TcpDeviceModel model, Stage stage, boolean isRunning) {
         TableColumn<MockResponseModel, Void> actionCol = new TableColumn<>("操作");
         actionCol.setPrefWidth(150);
         actionCol.setCellFactory(param -> new TableCell<>() {
@@ -299,16 +321,16 @@ public class MockResponseService {
             private final HBox   pane    = new HBox(8, editBtn, delBtn);
 
             {
-                pane.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                pane.setAlignment(Pos.CENTER_LEFT);
                 editBtn.getStyleClass().addAll("button-outlined", "button-sm");
                 delBtn.getStyleClass().addAll("button-outlined", "button-sm", "danger");
 
-                editBtn.setOnAction(e -> {
+                editBtn.setOnAction(_ -> {
                     MockResponseModel resp = getTableView().getItems().get(getIndex());
                     WindowUtil.showBased(stage, showAddResponseDialog(model, resp));
                 });
 
-                delBtn.setOnAction(e -> {
+                delBtn.setOnAction(_ -> {
                     MockResponseModel resp = getTableView().getItems().get(getIndex());
 
                     Optional<ButtonType> result = WindowUtil.showAlert(Alert.AlertType.CONFIRMATION,
@@ -339,23 +361,7 @@ public class MockResponseService {
                 }
             }
         });
-
-        respTable.getColumns().addAll(enabledCol, nameCol, slaveCol, addrCol, sizeCol, typeCol, actionCol);
-        root.getChildren().addAll(headerPanel, respTable);
-        respTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
-
-        model.getMockResponses().forEach(r -> r.enabledProperty().addListener((obs, old, val) -> {
-            TcpSimulatorService.updateSimulatorResps(model, model.getSimulator());
-        }));
-
-        Scene scene = new Scene(root);
-        WindowUtil.setupDialogCloseShortcuts(stage, scene);
-        URL resource = MockResponseService.class.getResource("style.css");
-        if (resource != null) {
-            scene.getStylesheets().add(resource.toExternalForm());
-        }
-        stage.setScene(scene);
-        return stage;
+        return actionCol;
     }
 
     public static void setupResponseTableContextMenu(TableView<MockResponseModel> respTable, TcpDeviceModel model, Stage based) {

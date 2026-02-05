@@ -14,6 +14,7 @@ public class ProgramStatusContext {
     public static final AtomicBoolean DATA_DIR_READY = new AtomicBoolean(false);
     public static final AtomicBoolean LOG_DIR_READY  = new AtomicBoolean(false);
     public static final AtomicBoolean CONF_DIR_READY = new AtomicBoolean(false);
+    public static final AtomicBoolean DEBUG          = new AtomicBoolean(false);
 
     private ProgramStatusContext() {}
 
@@ -45,6 +46,10 @@ public class ProgramStatusContext {
         CONF_DIR_READY.set(true);
     }
 
+    public static void debug() {
+        DEBUG.set(true);
+    }
+
     public static boolean isDataDirReady() {
         return DATA_DIR_READY.get();
     }
@@ -59,5 +64,9 @@ public class ProgramStatusContext {
 
     public static boolean isAllDirReady() {
         return ALL_DIR_READY.get();
+    }
+
+    public static boolean isDebug() {
+        return DEBUG.get();
     }
 }
