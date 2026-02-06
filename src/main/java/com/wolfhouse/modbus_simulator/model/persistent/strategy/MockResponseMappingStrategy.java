@@ -23,6 +23,7 @@ public class MockResponseMappingStrategy implements ModelMappingStrategy<MockRes
     public static final String DATA_SIZE      = "dataSize";
     public static final String DATA           = "data";
     public static final String RAND_DATA      = "randData";
+    public static final String FUNCTION_CODE  = "functionCode";
     public static final String MOCK_RESP_PAIR = "pair";
 
     private MockResponseMappingStrategy() {
@@ -33,11 +34,12 @@ public class MockResponseMappingStrategy implements ModelMappingStrategy<MockRes
     }
 
     private static Map<String, Object> getPairMap(ModbusTcpSimulator.MockRespPair pair) {
-        HashMap<String, Object> pairMap = HashMap.newHashMap(4);
+        HashMap<String, Object> pairMap = HashMap.newHashMap(5);
         pairMap.put(ADDR, pair.registerAddr());
         pairMap.put(DATA_SIZE, pair.dataSize());
         pairMap.put(RAND_DATA, pair.randData());
         pairMap.put(DATA, pair.data());
+        pairMap.put(FUNCTION_CODE, pair.functionCode());
         return pairMap;
     }
 
@@ -45,7 +47,8 @@ public class MockResponseMappingStrategy implements ModelMappingStrategy<MockRes
         return new ModbusTcpSimulator.MockRespPair((int) map.get(ADDR),
                                                    (int) map.get(DATA_SIZE),
                                                    (boolean) map.get(RAND_DATA),
-                                                   (byte[]) map.get(DATA));
+                                                   (byte[]) map.get(DATA),
+                                                   (int) (map.getOrDefault(FUNCTION_CODE, 3)));
     }
 
     @Override

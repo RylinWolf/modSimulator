@@ -54,6 +54,10 @@ public class MockResponseService {
         TextField sizeField    = new TextField(isEdit ? String.valueOf(existingResp.getPair().dataSize()) : "2");
         CheckBox  randCheckBox = new CheckBox("随机数据");
         randCheckBox.setSelected(isEdit && existingResp.getPair().randData());
+
+        TextField functionCodeField = new TextField(isEdit ? String.valueOf(existingResp.getFunctionCode()) : "3");
+        functionCodeField.setPromptText("例如：3 (0-255)");
+
         TextField dataField = new TextField();
         if (isEdit && !existingResp.getPair().randData() && existingResp.getPair().data() != null) {
             StringBuilder sb = new StringBuilder();
@@ -65,7 +69,8 @@ public class MockResponseService {
             dataField.setText("00 01");
         }
         TextArea remarkArea = new TextArea(isEdit ? existingResp.getRemark() : "");
-        remarkArea.setPrefRowCount(2);
+        remarkArea.setPrefRowCount(3);
+        remarkArea.setWrapText(true);
 
         grid.add(new Label("名称:"), 0, 0);
         grid.add(nameField, 1, 0);
@@ -75,17 +80,33 @@ public class MockResponseService {
         grid.add(addrField, 1, 2);
         grid.add(new Label("大小 (字节):"), 0, 3);
         grid.add(sizeField, 1, 3);
-        grid.add(randCheckBox, 0, 4);
-        grid.add(new Label("固定数据 (十六进制):"), 0, 5);
-        grid.add(dataField, 1, 5);
-        grid.add(new Label("备注:"), 0, 6);
-        grid.add(remarkArea, 1, 6);
+        grid.add(new Label("功能码:"), 0, 4);
+        grid.add(functionCodeField, 1, 4);
+        grid.add(randCheckBox, 0, 5);
+        grid.add(new Label("固定数据 (十六进制):"), 0, 6);
+        grid.add(dataField, 1, 6);
+        grid.add(new Label("备注:"), 0, 7);
+        grid.add(remarkArea, 1, 7);
 
         dataField.disableProperty().bind(randCheckBox.selectedProperty());
+
+        HBox footer = new HBox(12);
+        footer.setAlignment(Pos.CENTER_RIGHT);
+        footer.setPadding(new Insets(0, 30, 30, 30));
+
+        Button cancelBtn = new Button("取消");
+        cancelBtn.setOnAction(e -> stage.close());
 
         Button saveBtn = new Button("保存");
         saveBtn.getStyleClass().add("success");
         saveBtn.setPrefWidth(100);
+
+        footer.getChildren().addAll(cancelBtn, saveBtn);
+
+        VBox root = new VBox();
+        root.getChildren().addAll(grid, footer);
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
 
         Runnable saveTask = () -> {
             try {
@@ -93,16 +114,18 @@ public class MockResponseService {
                 String  sizeText = sizeField.getText();
                 int     addr     = addrText == null ? 0 : HexUtils.parseInt(addrText);
                 int     size     = sizeText == null ? 2 : Integer.parseInt(sizeText);
+                int     fc       = Integer.parseInt(functionCodeField.getText());
                 boolean rand     = randCheckBox.isSelected();
                 byte[]  data     = null;
                 if (!rand) {
                     data = HexUtils.parseHexData(dataField.getText());
                 }
 
-                com.wolfhouse.mod4j.utils.ModbusTcpSimulator.MockRespPair pair = new com.wolfhouse.mod4j.utils.ModbusTcpSimulator.MockRespPair(addr, size, rand, data);
+                com.wolfhouse.mod4j.utils.ModbusTcpSimulator.MockRespPair pair = new com.wolfhouse.mod4j.utils.ModbusTcpSimulator.MockRespPair(addr, size, rand, data, fc);
                 if (isEdit) {
                     existingResp.setName(nameField.getText());
                     existingResp.setSlaveId(slaveIdField.getText());
+                    existingResp.setFunctionCode(fc);
                     existingResp.setPair(pair);
                     existingResp.setRemark(remarkArea.getText());
                     existingResp.setDataSize(sizeField.getText());
@@ -142,12 +165,9 @@ public class MockResponseService {
             }
         });
         // 按下 cmd+s / ctrl+s 保存
-        WindowUtil.addSaveShortcut(grid, saveTask, true);
-        grid.add(saveBtn, 1, 7);
+        WindowUtil.addSaveShortcut(root, saveTask, true);
 
-        Scene scene = new Scene(grid);
         WindowUtil.setupDialogCloseShortcuts(stage, scene);
-        stage.setScene(scene);
         return stage;
     }
 
@@ -288,6 +308,10 @@ public class MockResponseService {
         addrCol.setPrefWidth(120);
         addrCol.setCellValueFactory(data -> data.getValue().regAddrProperty());
 
+        TableColumn<MockResponseModel, Integer> fcCol = new TableColumn<>("功能码");
+        fcCol.setPrefWidth(80);
+        fcCol.setCellValueFactory(data -> data.getValue().functionCodeProperty().asObject());
+
         TableColumn<MockResponseModel, String> sizeCol = new TableColumn<>("大小(Byte)");
         sizeCol.setPrefWidth(80);
         sizeCol.setCellValueFactory(data -> data.getValue().dataSizeProperty());
@@ -298,7 +322,7 @@ public class MockResponseService {
 
         TableColumn<MockResponseModel, Void> actionCol = getActionCol(model, stage, isRunning);
 
-        respTable.getColumns().addAll(enabledCol, nameCol, slaveCol, addrCol, sizeCol, typeCol, actionCol);
+        respTable.getColumns().addAll(enabledCol, nameCol, slaveCol, addrCol, fcCol, sizeCol, typeCol, actionCol);
         root.getChildren().addAll(headerPanel, respTable);
         respTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 

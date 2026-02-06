@@ -7,14 +7,15 @@ import javafx.beans.property.*;
  * @author Rylin Wolf
  */
 public class MockResponseModel implements SimulatorModel {
-    private final StringProperty                                  name     = new SimpleStringProperty("");
-    private final StringProperty                                  remark   = new SimpleStringProperty("");
-    private final BooleanProperty                                 enabled  = new SimpleBooleanProperty(true);
-    private final StringProperty                                  slaveId  = new SimpleStringProperty("1");
-    private final StringProperty                                  regAddr  = new SimpleStringProperty("0");
-    private final StringProperty                                  dataSize = new SimpleStringProperty("2");
-    private final StringProperty                                  dataType = new SimpleStringProperty("固定");
-    private final ObjectProperty<ModbusTcpSimulator.MockRespPair> pair     = new SimpleObjectProperty<>();
+    private final StringProperty                                  name         = new SimpleStringProperty("");
+    private final StringProperty                                  remark       = new SimpleStringProperty("");
+    private final BooleanProperty                                 enabled      = new SimpleBooleanProperty(true);
+    private final StringProperty                                  slaveId      = new SimpleStringProperty("1");
+    private final StringProperty                                  regAddr      = new SimpleStringProperty("0");
+    private final StringProperty                                  dataSize     = new SimpleStringProperty("2");
+    private final StringProperty                                  dataType     = new SimpleStringProperty("固定");
+    private final IntegerProperty                                 functionCode = new SimpleIntegerProperty(3);
+    private final ObjectProperty<ModbusTcpSimulator.MockRespPair> pair         = new SimpleObjectProperty<>();
 
     public MockResponseModel(String slaveId, String regAddr, ModbusTcpSimulator.MockRespPair pair) {
         this.slaveId.set(slaveId);
@@ -22,6 +23,7 @@ public class MockResponseModel implements SimulatorModel {
         this.regAddr.set(regAddr);
         this.dataSize.set(String.valueOf(pair.dataSize()));
         this.dataType.set(pair.randData() ? "随机" : "固定");
+        this.functionCode.set(pair.functionCode() == 0 ? 3 : pair.functionCode());
     }
 
     public String getName() {
@@ -118,5 +120,17 @@ public class MockResponseModel implements SimulatorModel {
 
     public StringProperty dataTypeProperty() {
         return dataType;
+    }
+
+    public int getFunctionCode() {
+        return functionCode.get();
+    }
+
+    public void setFunctionCode(int functionCode) {
+        this.functionCode.set(functionCode);
+    }
+
+    public IntegerProperty functionCodeProperty() {
+        return functionCode;
     }
 }
