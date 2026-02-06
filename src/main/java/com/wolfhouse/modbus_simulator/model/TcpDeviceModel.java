@@ -100,4 +100,14 @@ public class TcpDeviceModel implements SimulatorModel {
         return isTcpStrategy;
     }
 
+    @Override
+    public String toString() {
+        return "TcpDeviceModel{" +
+                "name=" + name.get() +
+                ", remark=" + remark.get() +
+                ", port=" + port.get() +
+                ", status=" + status.get() +
+                ", isTcpStrategy=" + isTcpStrategy.get() +
+                '}';
+    }
 }
