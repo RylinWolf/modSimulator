@@ -7,6 +7,9 @@ import javafx.collections.ObservableList;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * @author Rylin Wolf
+ */
 public class TcpDeviceModel implements SimulatorModel {
     private final StringProperty                    name          = new SimpleStringProperty("");
     private final StringProperty                    remark        = new SimpleStringProperty("");
@@ -96,7 +99,7 @@ public class TcpDeviceModel implements SimulatorModel {
         this.isTcpStrategy.set(isTcpStrategy);
     }
 
-    public javafx.beans.property.BooleanProperty isTcpStrategyProperty() {
+    public BooleanProperty isTcpStrategyProperty() {
         return isTcpStrategy;
     }
 

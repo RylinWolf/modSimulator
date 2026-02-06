@@ -85,7 +85,7 @@ public class LogUtil {
     }
 
     public static void error(String message, Throwable t) {
-        log("ERROR", message + (t == null ? "" : " - " + Arrays.toString(t.getStackTrace())));
+        log("ERROR", message + (t == null ? "" : "%s - %s".formatted(t.getMessage(), Arrays.toString(t.getStackTrace()))));
     }
 
     private static void log(String level, String format, Object... args) {

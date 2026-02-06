@@ -112,13 +112,14 @@ public class MockResponseService {
             try {
                 String  addrText = addrField.getText();
                 String  sizeText = sizeField.getText();
-                int     addr     = addrText == null ? 0 : HexUtils.parseInt(addrText);
-                int     size     = sizeText == null ? 2 : Integer.parseInt(sizeText);
-                int     fc       = Integer.parseInt(functionCodeField.getText());
+                int     addr     = addrText == null ? 0x0000 : HexUtils.parseInt(addrText);
+                int     size     = sizeText == null ? 0x02 : Integer.parseInt(sizeText);
+                String  funcText = functionCodeField.getText();
+                int     fc       = funcText == null ? 0x03 : Integer.parseInt(funcText);
                 boolean rand     = randCheckBox.isSelected();
                 byte[]  data     = null;
                 if (!rand) {
-                    data = HexUtils.parseHexData(dataField.getText());
+                    data = HexUtils.parseHexData(dataField.getText().replaceAll("\\s+", ""), 2);
                 }
 
                 com.wolfhouse.mod4j.utils.ModbusTcpSimulator.MockRespPair pair = new com.wolfhouse.mod4j.utils.ModbusTcpSimulator.MockRespPair(addr, size, rand, data, fc);

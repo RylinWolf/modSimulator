@@ -6,10 +6,10 @@ jpackage \
   --type exe \
   --dest dist \
   --name "ModbusSimulator" \
-  --app-version "1.3" \
+  --app-version "1.3.1" \
   --vendor "WolfHouse" \
   --input target/libs \
-  --main-jar modbus_simulator-1.3.jar \
+  --main-jar modbus_simulator-1.3.1.jar \
   --main-class com.wolfhouse.modbus_simulator.MainApplication \
   --module-path "$JMODS_PATH" \
   --add-modules javafx.controls,javafx.fxml,javafx.graphics,java.logging,java.desktop,java.sql \
