@@ -452,7 +452,7 @@ public class TcpSimulatorController {
         TextField nameField = new TextField(isEdit ? existingModel.getName() : "");
         nameField.setPromptText("例如：局放监测主机");
 
-        TextField portField = new TextField(String.valueOf(nextAvailablePort.get()));
+        TextField portField = new TextField(String.valueOf(isEdit ? existingModel.getPort() : nextAvailablePort.get()));
         portField.setPromptText("默认 5502");
 
         ComboBox<String> protocolCombo = new ComboBox<>(javafx.collections.FXCollections.observableArrayList("TCP (携带 MBAP 头)", "RTU (无 MBAP 头)"));
