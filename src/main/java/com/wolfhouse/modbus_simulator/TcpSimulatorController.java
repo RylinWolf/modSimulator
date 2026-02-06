@@ -400,7 +400,7 @@ public class TcpSimulatorController {
         }
         LogUtil.debug("执行启动设备 - {0}", model);
         try {
-            ModbusTcpSimulator simulator = new ModbusTcpSimulator(model.getPort());
+            ModbusTcpSimulator simulator = new ModbusTcpSimulator(model.getPort(), model.isTcpStrategy());
             simulator.setLogConsumer(model::appendLog);
             TcpSimulatorService.updateSimulatorResps(model, simulator);
             simulator.start();
@@ -455,6 +455,10 @@ public class TcpSimulatorController {
         TextField portField = new TextField(String.valueOf(nextAvailablePort.get()));
         portField.setPromptText("默认 5502");
 
+        ComboBox<String> protocolCombo = new ComboBox<>(javafx.collections.FXCollections.observableArrayList("TCP (携带 MBAP 头)", "RTU (无 MBAP 头)"));
+        protocolCombo.setMaxWidth(Double.MAX_VALUE);
+        protocolCombo.getSelectionModel().select(isEdit && !existingModel.isTcpStrategy() ? 1 : 0);
+
         TextArea remarkArea = new TextArea(isEdit ? existingModel.getRemark() : "");
         remarkArea.setPromptText("可选的备注信息...");
         remarkArea.setPrefRowCount(3);
@@ -470,10 +474,15 @@ public class TcpSimulatorController {
         grid.add(portLabel, 0, 2);
         grid.add(portField, 0, 3);
 
+        Label protocolLabel = new Label("通信协议");
+        protocolLabel.getStyleClass().add("form-label");
+        grid.add(protocolLabel, 0, 4);
+        grid.add(protocolCombo, 0, 5);
+
         Label remarkLabel = new Label("备注");
         remarkLabel.getStyleClass().add("form-label");
-        grid.add(remarkLabel, 0, 4);
-        grid.add(remarkArea, 0, 5);
+        grid.add(remarkLabel, 0, 6);
+        grid.add(remarkArea, 0, 7);
 
         ColumnConstraints cc = new ColumnConstraints();
         cc.setHgrow(Priority.ALWAYS);
@@ -497,7 +506,8 @@ public class TcpSimulatorController {
             LogUtil.debug("保存设备配置, port: {0}, name: {1}, remark: {2}",
                           portField.getText(), nameField.getText(), remarkArea.getText());
             try {
-                int port = Integer.parseInt(portField.getText());
+                int     port          = Integer.parseInt(portField.getText());
+                boolean isTcpStrategy = protocolCombo.getSelectionModel().getSelectedIndex() == 0;
                 if (port > 0xFFFF || port < 0) {
                     throw new NumberFormatException();
                 }
@@ -519,10 +529,12 @@ public class TcpSimulatorController {
                 if (isEdit) {
                     existingModel.setName(nameField.getText());
                     existingModel.setPort(port);
+                    existingModel.setTcpStrategy(isTcpStrategy);
                     existingModel.setRemark(remarkArea.getText());
                 } else {
                     TcpDeviceModel newModel = new TcpDeviceModel(port);
                     newModel.setName(nameField.getText());
+                    newModel.setTcpStrategy(isTcpStrategy);
                     newModel.setRemark(remarkArea.getText());
                     devices.add(newModel);
                 }

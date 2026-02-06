@@ -4,6 +4,7 @@ import com.wolfhouse.mod4j.utils.HexUtils;
 import com.wolfhouse.modbus_simulator.model.MockResponseModel;
 import com.wolfhouse.modbus_simulator.model.ProgramStatusContext;
 import com.wolfhouse.modbus_simulator.model.TcpDeviceModel;
+import com.wolfhouse.modbus_simulator.util.LogUtil;
 import com.wolfhouse.modbus_simulator.util.WindowUtil;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -88,10 +89,12 @@ public class MockResponseService {
 
         Runnable saveTask = () -> {
             try {
-                int     addr = HexUtils.parseInt(addrField.getText());
-                int     size = Integer.parseInt(sizeField.getText());
-                boolean rand = randCheckBox.isSelected();
-                byte[]  data = null;
+                String  addrText = addrField.getText();
+                String  sizeText = sizeField.getText();
+                int     addr     = addrText == null ? 0 : HexUtils.parseInt(addrText);
+                int     size     = sizeText == null ? 2 : Integer.parseInt(sizeText);
+                boolean rand     = randCheckBox.isSelected();
+                byte[]  data     = null;
                 if (!rand) {
                     data = HexUtils.parseHexData(dataField.getText());
                 }
@@ -121,6 +124,7 @@ public class MockResponseService {
                     stage.close();
                 }
             } catch (Exception ex) {
+                LogUtil.error("响应编辑失败", ex);
                 WindowUtil.showError("输入无效", ex, stage);
             }
         };

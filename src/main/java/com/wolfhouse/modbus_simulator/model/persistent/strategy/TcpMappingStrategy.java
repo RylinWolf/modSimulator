@@ -13,11 +13,12 @@ import java.util.Map;
  */
 @SuppressWarnings({"unchecked", "unused", "UnusedReturnValue"})
 public class TcpMappingStrategy implements ModelMappingStrategy<TcpDeviceModel> {
-    public static final String NAME           = "name";
-    public static final String PORT           = "port";
-    public static final String REMARK         = "remark";
-    public static final String LOGS           = "logs";
-    public static final String MOCK_RESPONSES = "mockResponses";
+    public static final String NAME            = "name";
+    public static final String PORT            = "port";
+    public static final String REMARK          = "remark";
+    public static final String LOGS            = "logs";
+    public static final String IS_TCP_STRATEGY = "isTcpStrategy";
+    public static final String MOCK_RESPONSES  = "mockResponses";
 
     private TcpMappingStrategy() {}
 
@@ -31,6 +32,7 @@ public class TcpMappingStrategy implements ModelMappingStrategy<TcpDeviceModel> 
                              Map.entry(PORT, model.getPort()),
                              Map.entry(REMARK, model.getRemark()),
                              Map.entry(LOGS, model.getLogs()),
+                             Map.entry(IS_TCP_STRATEGY, model.isTcpStrategy()),
                              Map.entry(MOCK_RESPONSES,
                                        MockResponseMappingStrategy
                                                .getInstance()
@@ -48,12 +50,14 @@ public class TcpMappingStrategy implements ModelMappingStrategy<TcpDeviceModel> 
         model.setName((String) map.get(NAME));
         model.setRemark((String) map.get(REMARK));
         model.setLogs((String) map.get(LOGS));
+        if (map.containsKey(IS_TCP_STRATEGY)) {
+            model.setTcpStrategy((boolean) map.get(IS_TCP_STRATEGY));
+        }
         model.getMockResponses()
              .addAll(MockResponseMappingStrategy
                              .getInstance()
                              .readAll((List<Map<String, Object>>) map.get(MOCK_RESPONSES)));
         return model;
-
     }
 
     @Override

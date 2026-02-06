@@ -120,6 +120,15 @@ public class MainApplication extends Application {
             ProgramStatusContext.debug();
             LogUtil.debug("调试模式已启动");
         }
+        // 控制台最大字符数
+        String consoleMaxLeng = coreConf.getProperty(AppConf.APP_CONF_CONSOLE_MAX_CHARS);
+        int    consoleMaxChars;
+        if (consoleMaxLeng == null
+                || (consoleMaxChars = Integer.parseInt(consoleMaxLeng)) <= 0
+                || consoleMaxChars > AppConf.CONSOLE_MAX_CHARS) {
+            consoleMaxChars = AppConf.CONSOLE_MAX_CHARS;
+        }
+        ProgramStatusContext.consoleMaxChars(consoleMaxChars);
         return true;
     }
 }

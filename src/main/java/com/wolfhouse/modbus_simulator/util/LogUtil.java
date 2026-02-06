@@ -13,6 +13,7 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
@@ -84,7 +85,7 @@ public class LogUtil {
     }
 
     public static void error(String message, Throwable t) {
-        log("ERROR", message + (t == null ? "" : " - " + t));
+        log("ERROR", message + (t == null ? "" : " - " + Arrays.toString(t.getStackTrace())));
     }
 
     private static void log(String level, String format, Object... args) {

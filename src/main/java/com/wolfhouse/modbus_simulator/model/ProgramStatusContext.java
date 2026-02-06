@@ -1,6 +1,9 @@
 package com.wolfhouse.modbus_simulator.model;
 
+import com.wolfhouse.modbus_simulator.meta.AppConf;
+
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 程序状态上下文
@@ -9,12 +12,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ProgramStatusContext {
     /** 是否有未保存的更改 */
-    public static final AtomicBoolean UNSAVED          = new AtomicBoolean(false);
-    public static final AtomicBoolean DATA_DIR_READY   = new AtomicBoolean(false);
-    public static final AtomicBoolean LOG_DIR_READY    = new AtomicBoolean(false);
-    public static final AtomicBoolean CONF_DIR_READY   = new AtomicBoolean(false);
-    public static final AtomicBoolean CORE_CONF_LOADED = new AtomicBoolean(false);
-    public static final AtomicBoolean DEBUG            = new AtomicBoolean(false);
+    public static final AtomicBoolean UNSAVED           = new AtomicBoolean(false);
+    public static final AtomicBoolean DATA_DIR_READY    = new AtomicBoolean(false);
+    public static final AtomicBoolean LOG_DIR_READY     = new AtomicBoolean(false);
+    public static final AtomicBoolean CONF_DIR_READY    = new AtomicBoolean(false);
+    public static final AtomicBoolean CORE_CONF_LOADED  = new AtomicBoolean(false);
+    public static final AtomicBoolean DEBUG             = new AtomicBoolean(false);
+    public static final AtomicInteger CONSOLE_MAX_CHARS = new AtomicInteger(AppConf.CONSOLE_MAX_CHARS);
 
     private ProgramStatusContext() {}
 
@@ -68,5 +72,13 @@ public class ProgramStatusContext {
 
     public static boolean isCoreConfLoaded() {
         return CORE_CONF_LOADED.get();
+    }
+
+    public static void consoleMaxChars(int consoleMaxChars) {
+        CONSOLE_MAX_CHARS.set(consoleMaxChars);
+    }
+
+    public static int consoleMaxChars() {
+        return CONSOLE_MAX_CHARS.get();
     }
 }

@@ -50,11 +50,14 @@ public class MockResponseMappingStrategy implements ModelMappingStrategy<MockRes
 
     @Override
     public Map<String, Object> map(MockResponseModel model) {
-        return Map.ofEntries(Map.entry(NAME, model.getName()),
-                             Map.entry(REMARK, model.getRemark()),
-                             Map.entry(SLAVE_ID, model.getSlaveId()),
-                             Map.entry(ENABLED, model.isEnabled()),
-                             Map.entry(MOCK_RESP_PAIR, getPairMap(model.getPair())));
+        HashMap<String, Object> map = HashMap.newHashMap(6);
+        map.put(NAME, model.getName());
+        map.put(REMARK, model.getRemark());
+        map.put(SLAVE_ID, model.getSlaveId());
+        map.put(ENABLED, model.isEnabled());
+        map.put(ADDR, model.getRegAddr());
+        map.put(MOCK_RESP_PAIR, getPairMap(model.getPair()));
+        return map;
     }
 
     @Override

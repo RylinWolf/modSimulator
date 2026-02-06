@@ -1,10 +1,7 @@
 package com.wolfhouse.modbus_simulator.model;
 
 import com.wolfhouse.mod4j.utils.ModbusTcpSimulator;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import lombok.Getter;
@@ -15,6 +12,7 @@ public class TcpDeviceModel implements SimulatorModel {
     private final StringProperty                    remark        = new SimpleStringProperty("");
     private final IntegerProperty                   port          = new SimpleIntegerProperty();
     private final StringProperty                    status        = new SimpleStringProperty("已停止");
+    private final BooleanProperty                   isTcpStrategy = new SimpleBooleanProperty(true);
     @Getter
     private final ObservableList<MockResponseModel> mockResponses = FXCollections.observableArrayList();
     private final StringProperty                    logs          = new SimpleStringProperty("");
@@ -40,7 +38,8 @@ public class TcpDeviceModel implements SimulatorModel {
             if (this.logs.get() == null) {
                 return;
             }
-            this.logs.set(this.logs.get() + log + "\n");
+            // 处理日志长度
+            combineAndSet(log);
         } else {
             javafx.application.Platform.runLater(() -> {
                 if (com.wolfhouse.modbus_simulator.DeviceManager.getInstance().isShuttingDown()) {
@@ -49,9 +48,18 @@ public class TcpDeviceModel implements SimulatorModel {
                 if (this.logs.get() == null) {
                     return;
                 }
-                this.logs.set(this.logs.get() + log + "\n");
+                combineAndSet(log);
             });
         }
+    }
+
+    private void combineAndSet(String log) {
+        String combinedLogs = this.logs.get() + log;
+        int    logLenExceed = combinedLogs.length() - ProgramStatusContext.consoleMaxChars();
+        if (logLenExceed > 0) {
+            combinedLogs = combinedLogs.substring(logLenExceed);
+        }
+        this.logs.set(combinedLogs + "\n");
     }
 
     public void clearLogs()                {this.logs.set("");}
@@ -79,5 +87,17 @@ public class TcpDeviceModel implements SimulatorModel {
     public void setStatus(String status)   {this.status.set(status);}
 
     public StringProperty statusProperty() {return status;}
+
+    public boolean isTcpStrategy() {
+        return isTcpStrategy.get();
+    }
+
+    public void setTcpStrategy(boolean isTcpStrategy) {
+        this.isTcpStrategy.set(isTcpStrategy);
+    }
+
+    public javafx.beans.property.BooleanProperty isTcpStrategyProperty() {
+        return isTcpStrategy;
+    }
 
 }
