@@ -1,10 +1,7 @@
 package com.wolfhouse.modbus_simulator;
 
-import atlantafx.base.theme.CupertinoDark;
-import atlantafx.base.theme.CupertinoLight;
 import com.wolfhouse.modbus_simulator.util.SystemUtil;
 import com.wolfhouse.modbus_simulator.util.WindowUtil;
-import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -28,7 +25,7 @@ import java.net.URISyntaxException;
 
 public class MainController {
 
-    private final java.util.Map<String, Node> viewCache  = new java.util.HashMap<>();
+    private final java.util.Map<String, Node> viewCache = new java.util.HashMap<>();
     @FXML
     private       StackPane                   contentArea;
     @FXML
@@ -37,19 +34,23 @@ public class MainController {
     private       Button                      themeBtn;
     @FXML
     private       Label                       versionLabel;
-    private       boolean                     isDarkMode = true;
 
     @FXML
     public void initialize() {
-        themeBtn.setGraphic(new FontIcon(MaterialDesignW.WEATHER_NIGHT));
+        themeBtn.setGraphic(new FontIcon(MainApplication.isDarkMode() ? MaterialDesignW.WEATHER_NIGHT : MaterialDesignW.WEATHER_SUNNY));
         versionLabel.setText("Version %s".formatted(SystemUtil.getVersion()));
         showTcpView();
 
+        // 监听主题变化更新图标
+        MainApplication
+                .darkModeProperty()
+                .addListener((_,
+                              _,
+                              newVal) -> Platform.runLater(
+                        () -> themeBtn.setGraphic(new FontIcon(newVal ? MaterialDesignW.WEATHER_NIGHT : MaterialDesignW.WEATHER_SUNNY))));
+
         // 在 initialize 之后，Scene 才会附加到 contentArea 的窗口
-        Platform.runLater(() -> {
-            applyTheme();
-            setupGlobalShortcuts();
-        });
+        Platform.runLater(this::setupGlobalShortcuts);
     }
 
     private void setupGlobalShortcuts() {
@@ -71,22 +72,7 @@ public class MainController {
 
     @FXML
     private void toggleTheme() {
-        isDarkMode = !isDarkMode;
-        applyTheme();
-    }
-
-    private void applyTheme() {
-        if (isDarkMode) {
-            Application.setUserAgentStylesheet(new CupertinoDark().getUserAgentStylesheet());
-            themeBtn.setGraphic(new FontIcon(MaterialDesignW.WEATHER_NIGHT));
-            contentArea.getScene().getRoot().getStyleClass().remove("light");
-            contentArea.getScene().getRoot().getStyleClass().add("dark");
-        } else {
-            Application.setUserAgentStylesheet(new CupertinoLight().getUserAgentStylesheet());
-            themeBtn.setGraphic(new FontIcon(MaterialDesignW.WEATHER_SUNNY));
-            contentArea.getScene().getRoot().getStyleClass().remove("dark");
-            contentArea.getScene().getRoot().getStyleClass().add("light");
-        }
+        MainApplication.setDarkMode(!MainApplication.isDarkMode());
     }
 
     @FXML

@@ -1,6 +1,7 @@
 package com.wolfhouse.modbus_simulator;
 
 import atlantafx.base.theme.CupertinoDark;
+import atlantafx.base.theme.CupertinoLight;
 import com.wolfhouse.modbus_simulator.meta.AppConf;
 import com.wolfhouse.modbus_simulator.meta.AppDirs;
 import com.wolfhouse.modbus_simulator.model.ProgramStatusContext;
@@ -8,20 +9,46 @@ import com.wolfhouse.modbus_simulator.util.ConfUtil;
 import com.wolfhouse.modbus_simulator.util.LogUtil;
 import com.wolfhouse.modbus_simulator.util.SystemUtil;
 import com.wolfhouse.modbus_simulator.util.WindowUtil;
+import javafx.animation.FadeTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.IOException;
 import java.util.*;
 
 public class MainApplication extends Application {
+
+    private static final BooleanProperty darkModeProperty = new SimpleBooleanProperty(SystemUtil.isDarkMode());
+    private static       Stage           primaryStage;
+
+    public static BooleanProperty darkModeProperty() {
+        return darkModeProperty;
+    }
+
+    public static boolean isDarkMode() {
+        return darkModeProperty.get();
+    }
+
+    public static void setDarkMode(boolean darkMode) {
+        darkModeProperty.set(darkMode);
+    }
+
     @Override
     public void start(Stage stage) throws IOException {
+        primaryStage = stage;
         // 设置全局 Locale
         // 设置全局 Locale
         Locale.setDefault(Locale.CHINA);
@@ -33,16 +60,71 @@ public class MainApplication extends Application {
         System.setProperty("apple.awt.locale", "zh_CN");
         System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Modbus 模拟器");
         ResourceBundle.clearCache();
-        Application.setUserAgentStylesheet(new CupertinoDark().getUserAgentStylesheet());
+
+        // 绑定主题切换
+        darkModeProperty.addListener((_, _, newVal) -> {
+            Platform.runLater(() -> {
+                Scene scene = primaryStage.getScene();
+                if (scene == null || scene.getRoot() == null) {
+                    applyTheme(newVal);
+                    return;
+                }
+
+                // 1. 获取当前场景截图
+                WritableImage snapshot = scene.snapshot(null);
+
+                // 2. 创建覆盖层
+                ImageView imageView = new ImageView(snapshot);
+                Pane      root      = (Pane) scene.getRoot();
+
+                // 如果 root 已经是一个 StackPane，直接添加，否则可能需要包装
+                // 考虑到 main-view.fxml 的根节点是 BorderPane，我们建议在 start 方法中进行包装
+                if (root instanceof StackPane stackPane) {
+                    stackPane.getChildren().add(imageView);
+                } else {
+                    // 如果不是 StackPane，则执行普通切换
+                    applyTheme(newVal);
+                    return;
+                }
+
+                // 3. 切换主题
+                applyTheme(newVal);
+
+                // 4. 动画淡出截图
+                FadeTransition fade = new FadeTransition(Duration.millis(400), imageView);
+                fade.setFromValue(1.0);
+                fade.setToValue(0.0);
+                fade.setOnFinished(_ -> stackPane.getChildren().remove(imageView));
+                fade.play();
+            });
+        });
+
+        // 初始化主题
+        if (isDarkMode()) {
+            Application.setUserAgentStylesheet(new CupertinoDark().getUserAgentStylesheet());
+        } else {
+            Application.setUserAgentStylesheet(new CupertinoLight().getUserAgentStylesheet());
+        }
 
         FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("main-view.fxml"));
-        Scene      scene      = new Scene(fxmlLoader.load());
+        Parent     root       = fxmlLoader.load();
+        // 使用 StackPane 包装原始根节点，以便添加动画覆盖层
+        StackPane wrapper = new StackPane(root);
+        Scene     scene   = new Scene(wrapper);
         stage.setTitle("Modbus 模拟器");
         stage.setScene(scene);
         stage.show();
 
         // 执行初始化
         initApplication(stage);
+    }
+
+    private void applyTheme(boolean dark) {
+        if (dark) {
+            Application.setUserAgentStylesheet(new CupertinoDark().getUserAgentStylesheet());
+        } else {
+            Application.setUserAgentStylesheet(new CupertinoLight().getUserAgentStylesheet());
+        }
     }
 
 
@@ -79,6 +161,9 @@ public class MainApplication extends Application {
         // 核心配置加载完毕
         ProgramStatusContext.coreConfLoaded();
 
+        // 启动系统深色模式监听
+        startDarkModeMonitor();
+
         // 3. 虚拟线程初始化其他目录
         Map<String, Exception> initConfErr = initDirs();
         if (!initConfErr.isEmpty()) {
@@ -91,6 +176,29 @@ public class MainApplication extends Application {
                                                          stage,
                                                          ButtonType.OK));
         }
+    }
+
+    private void startDarkModeMonitor() {
+        Thread monitorThread = new Thread(() -> {
+            while (true) {
+                try {
+                    // 每 3 秒检查一次系统模式
+                    Thread.sleep(3000);
+                    boolean currentSystemDarkMode = SystemUtil.isDarkMode();
+                    if (currentSystemDarkMode != isDarkMode()) {
+                        LogUtil.info("检测到系统主题变化，正在同步...");
+                        Platform.runLater(() -> setDarkMode(currentSystemDarkMode));
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (Exception e) {
+                    LogUtil.error("系统主题监控出错", e);
+                }
+            }
+        }, "DarkModeMonitor");
+        monitorThread.setDaemon(true);
+        monitorThread.start();
     }
 
     /**

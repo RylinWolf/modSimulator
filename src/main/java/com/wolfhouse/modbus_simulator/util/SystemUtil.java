@@ -145,6 +145,47 @@ public class SystemUtil {
     }
 
 
+    /**
+     * 判断系统是否处于深色模式
+     *
+     * @return true 如果是深色模式
+     */
+    public static boolean isDarkMode() {
+        return switch (OS_TYPE) {
+            case MACOS -> isMacDarkMode();
+            case WINDOWS -> isWindowsDarkMode();
+            default -> false;
+        };
+    }
+
+    private static boolean isMacDarkMode() {
+        try {
+            Process process = Runtime.getRuntime().exec(new String[]{"defaults", "read", "-g", "AppleInterfaceStyle"});
+            try (InputStream is = process.getInputStream()) {
+                String result = new String(is.readAllBytes()).trim();
+                return "Dark".equalsIgnoreCase(result);
+            }
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    private static boolean isWindowsDarkMode() {
+        try {
+            Process process = Runtime.getRuntime().exec(new String[]{
+                    "reg", "query", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                    "/v", "AppsUseLightTheme"
+            });
+            try (InputStream is = process.getInputStream()) {
+                String result = new String(is.readAllBytes());
+                // 0 表示深色模式，1 表示浅色模式
+                return result.contains("0x0");
+            }
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
     public enum OS {
         /** 操作系统类型 */
         WINDOWS, LINUX, MACOS, OTHER
