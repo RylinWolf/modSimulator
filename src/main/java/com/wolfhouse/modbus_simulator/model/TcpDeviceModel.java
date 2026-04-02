@@ -7,18 +7,27 @@ import javafx.collections.ObservableList;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
  * @author Rylin Wolf
  */
 public class TcpDeviceModel implements SimulatorModel {
-    private final StringProperty                    name          = new SimpleStringProperty("");
-    private final StringProperty                    remark        = new SimpleStringProperty("");
-    private final IntegerProperty                   port          = new SimpleIntegerProperty();
-    private final StringProperty                    status        = new SimpleStringProperty("已停止");
-    private final BooleanProperty                   isTcpStrategy = new SimpleBooleanProperty(true);
+    private final StringProperty                    name              = new SimpleStringProperty("");
+    private final StringProperty                    remark            = new SimpleStringProperty("");
+    private final IntegerProperty                   port              = new SimpleIntegerProperty();
+    private final StringProperty                    status            = new SimpleStringProperty("已停止");
+    private final BooleanProperty                   isTcpStrategy     = new SimpleBooleanProperty(true);
     @Getter
-    private final ObservableList<MockResponseModel> mockResponses = FXCollections.observableArrayList();
-    private final StringProperty                    logs          = new SimpleStringProperty("");
+    private final ObservableList<MockResponseModel> mockResponses     = FXCollections.observableArrayList();
+    private final IntegerProperty                   globalTimeoutMs   = new SimpleIntegerProperty(0);
+    private final DoubleProperty                    globalSuccessRate = new SimpleDoubleProperty(1.0D);
+    @Getter
+    private final Map<String, Integer>              hostTimeoutMs     = new LinkedHashMap<>();
+    @Getter
+    private final Map<String, Double>               hostSuccessRates  = new LinkedHashMap<>();
+    private final StringProperty                    logs              = new SimpleStringProperty("");
     @Getter
     @Setter
     private       ModbusTcpSimulator                simulator;
@@ -27,9 +36,51 @@ public class TcpDeviceModel implements SimulatorModel {
         this.port.set(port);
     }
 
-    public String getLogs()              {return logs.get();}
+    public String getLogs()          {return logs.get();}
 
-    public void setLogs(String logs)     {this.logs.set(logs);}
+    public void setLogs(String logs) {this.logs.set(logs);}
+
+    public int getGlobalTimeoutMs()  {return globalTimeoutMs.get();}
+
+    public void setGlobalTimeoutMs(int timeoutMs) {
+        this.globalTimeoutMs.set(Math.max(timeoutMs, 0));
+    }
+
+    public IntegerProperty globalTimeoutMsProperty() {return globalTimeoutMs;}
+
+    public double getGlobalSuccessRate()             {return globalSuccessRate.get();}
+
+    public void setGlobalSuccessRate(double successRate) {
+        this.globalSuccessRate.set(Math.clamp(successRate, 0.0D, 1.0D));
+    }
+
+    public DoubleProperty globalSuccessRateProperty() {return globalSuccessRate;}
+
+    public void setHostTimeoutMs(Map<String, Integer> map) {
+        hostTimeoutMs.clear();
+        if (map == null) {
+            return;
+        }
+        map.forEach((host, timeout) -> {
+            if (host == null || host.isBlank() || timeout == null) {
+                return;
+            }
+            hostTimeoutMs.put(host.trim(), Math.max(timeout, 0));
+        });
+    }
+
+    public void setHostSuccessRates(Map<String, Double> map) {
+        hostSuccessRates.clear();
+        if (map == null) {
+            return;
+        }
+        map.forEach((host, successRate) -> {
+            if (host == null || host.isBlank() || successRate == null) {
+                return;
+            }
+            hostSuccessRates.put(host.trim(), Math.clamp(successRate, 0.0D, 1.0D));
+        });
+    }
 
     public StringProperty logsProperty() {return logs;}
 

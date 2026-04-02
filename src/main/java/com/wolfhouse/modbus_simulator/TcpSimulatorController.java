@@ -249,16 +249,18 @@ public class TcpSimulatorController {
         actionsColumn.setCellFactory(_ -> new TableCell<>() {
             private final Button startStopBtn = new Button();
             private final Button addRespBtn   = new Button("响应");
+            private final Button timeoutBtn   = new Button("延时");
             private final Button editBtn      = new Button("编辑");
             private final Button consoleBtn   = new Button("控制台");
             private final Button deleteBtn    = new Button("删除");
-            private final HBox   pane         = new HBox(8, startStopBtn, addRespBtn, editBtn, consoleBtn, deleteBtn);
+            private final HBox   pane         = new HBox(8, startStopBtn, addRespBtn, editBtn, timeoutBtn, consoleBtn, deleteBtn);
 
             {
                 pane.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
                 startStopBtn.getStyleClass().addAll("button-outlined", "button-sm");
                 addRespBtn.getStyleClass().addAll("button-outlined", "button-sm");
                 editBtn.getStyleClass().addAll("button-outlined", "button-sm");
+                timeoutBtn.getStyleClass().addAll("button-outlined", "button-sm");
                 consoleBtn.getStyleClass().addAll("button-outlined", "button-sm");
                 deleteBtn.getStyleClass().addAll("button-outlined", "button-sm", "danger");
 
@@ -278,7 +280,10 @@ public class TcpSimulatorController {
                     WindowUtil.showBased(getBaseStage(), getDeviceDialog(model));
                     ProgramStatusContext.unsaved();
                 });
-
+                timeoutBtn.setOnAction(event -> {
+                    TcpDeviceModel model = getTableView().getItems().get(getIndex());
+                    WindowUtil.showBased(getBaseStage(), MockResponseService.showTimeoutDialog(model));
+                });
                 consoleBtn.setOnAction(event -> {
                     TcpDeviceModel model = getTableView().getItems().get(getIndex());
                     Stage          stage = TcpSimulatorService.showConsoleDialog(model);
@@ -403,6 +408,7 @@ public class TcpSimulatorController {
             ModbusTcpSimulator simulator = new ModbusTcpSimulator(model.getPort(), model.isTcpStrategy());
             simulator.setLogConsumer(model::appendLog);
             TcpSimulatorService.updateSimulatorResps(model, simulator);
+            TcpSimulatorService.updateSimulatorTimeouts(model, simulator);
             simulator.start();
             model.setSimulator(simulator);
             model.setStatus(STATE_RUNNING);

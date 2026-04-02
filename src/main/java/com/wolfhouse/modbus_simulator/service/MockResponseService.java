@@ -11,16 +11,17 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.converter.DoubleStringConverter;
+import javafx.util.converter.IntegerStringConverter;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * 虚拟响应服务
@@ -460,4 +461,223 @@ public class MockResponseService {
         });
     }
 
+    /**
+     * 延时配置对话框
+     *
+     * @param model TCP 设备模型
+     * @return 窗口
+     */
+    public static Stage showTimeoutDialog(TcpDeviceModel model) {
+        Stage stage = new Stage();
+        stage.initModality(Modality.APPLICATION_MODAL);
+        stage.setTitle("延时配置 - 端口 " + model.getPort());
+
+        boolean isRunning = "运行中".equals(model.getStatus());
+
+        VBox root = new VBox(12);
+        root.setPadding(new Insets(20));
+
+        Label title = new Label("虚拟延时与成功率配置");
+        title.getStyleClass().add("header-title");
+        Label hint = new Label("支持端口与主机位粒度配置：延时(ms)、成功率(0~1)");
+        hint.getStyleClass().add("text-muted");
+
+        HBox globalBox = new HBox(16);
+        globalBox.setAlignment(Pos.CENTER_LEFT);
+        Label     globalLabel = new Label("全局延时(ms):");
+        TextField globalField = new TextField(String.valueOf(model.getGlobalTimeoutMs()));
+        globalField.setPrefWidth(120);
+        Label     globalSuccessLabel = new Label("全局成功率:");
+        TextField globalSuccessField = new TextField(String.valueOf(model.getGlobalSuccessRate()));
+        globalSuccessField.setPrefWidth(120);
+        globalField.setDisable(isRunning);
+        globalSuccessField.setDisable(isRunning);
+        globalBox.getChildren().addAll(globalLabel, globalField, globalSuccessLabel, globalSuccessField);
+
+        TableView<HostTimeoutRow> timeoutTable = new TableView<>();
+        timeoutTable.setEditable(!isRunning);
+        timeoutTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        VBox.setVgrow(timeoutTable, Priority.ALWAYS);
+
+        TableColumn<HostTimeoutRow, String> hostCol = new TableColumn<>("主机位");
+        hostCol.setCellValueFactory(data -> data.getValue().hostProperty());
+        hostCol.setEditable(false);
+
+        TableColumn<HostTimeoutRow, Integer> timeoutCol = new TableColumn<>("延时(ms)");
+        timeoutCol.setCellValueFactory(data -> data.getValue().timeoutProperty().asObject());
+        timeoutCol.setEditable(!isRunning);
+        timeoutCol.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
+        timeoutCol.setOnEditCommit(event -> {
+            Integer value = event.getNewValue();
+            if (value == null || value < 0) {
+                event.getRowValue().setTimeout(0);
+                timeoutTable.refresh();
+                return;
+            }
+            event.getRowValue().setTimeout(value);
+        });
+
+        TableColumn<HostTimeoutRow, Double> successCol = new TableColumn<>("成功率");
+        successCol.setCellValueFactory(data -> data.getValue().successRateProperty().asObject());
+        successCol.setEditable(!isRunning);
+        successCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
+        successCol.setOnEditCommit(event -> {
+            Double value = event.getNewValue();
+            if (value == null || value < 0.0D || value > 1.0D) {
+                event.getRowValue().setSuccessRate(1.0D);
+                timeoutTable.refresh();
+                return;
+            }
+            event.getRowValue().setSuccessRate(value);
+        });
+
+        timeoutTable.getColumns().addAll(hostCol, timeoutCol, successCol);
+        timeoutTable.getItems().addAll(buildHostRows(model));
+
+        if (timeoutTable.getItems().isEmpty()) {
+            timeoutTable.setPlaceholder(new Label("当前端口下暂无主机位，请先配置虚拟响应"));
+        }
+
+        HBox footer = new HBox(10);
+        footer.setAlignment(Pos.CENTER_RIGHT);
+        Button cancelBtn = new Button(isRunning ? "关闭" : "取消");
+        Button saveBtn   = new Button("保存");
+        saveBtn.getStyleClass().add("success");
+        saveBtn.setDisable(isRunning);
+        cancelBtn.setOnAction(_ -> stage.close());
+
+        Runnable saveAction = () -> {
+            Integer globalTimeout = parseTimeout(globalField.getText(), "全局延时", stage);
+            if (globalTimeout == null) {
+                return;
+            }
+            Double globalSuccessRate = parseSuccessRate(globalSuccessField.getText(), "全局成功率", stage);
+            if (globalSuccessRate == null) {
+                return;
+            }
+            Map<String, Integer> hostTimeouts     = new LinkedHashMap<>();
+            Map<String, Double>  hostSuccessRates = new LinkedHashMap<>();
+            for (HostTimeoutRow row : timeoutTable.getItems()) {
+                int    timeout     = row.getTimeout();
+                double successRate = row.getSuccessRate();
+                if (timeout < 0) {
+                    WindowUtil.showAlert(Alert.AlertType.WARNING, "输入错误", "参数校验失败", "主机位延时必须是大于等于 0 的整数", stage, ButtonType.OK);
+                    return;
+                }
+                if (successRate < 0.0D || successRate > 1.0D) {
+                    WindowUtil.showAlert(Alert.AlertType.WARNING, "输入错误", "参数校验失败", "主机位成功率必须是 0 到 1 之间的小数", stage, ButtonType.OK);
+                    return;
+                }
+                hostTimeouts.put(row.getHost(), timeout);
+                hostSuccessRates.put(row.getHost(), successRate);
+            }
+
+            model.setGlobalTimeoutMs(globalTimeout);
+            model.setHostTimeoutMs(hostTimeouts);
+            model.setGlobalSuccessRate(globalSuccessRate);
+            model.setHostSuccessRates(hostSuccessRates);
+            TcpSimulatorService.updateSimulatorTimeouts(model, model.getSimulator());
+            ProgramStatusContext.unsaved();
+            stage.close();
+        };
+
+        saveBtn.setOnAction(_ -> saveAction.run());
+        WindowUtil.addSaveShortcut(root, saveAction, !isRunning);
+
+        footer.getChildren().addAll(cancelBtn, saveBtn);
+        root.getChildren().addAll(title, hint, new Separator(), globalBox, timeoutTable, footer);
+
+        Scene scene = new Scene(root, 620, 480);
+        WindowUtil.setupDialogCloseShortcuts(stage, scene);
+        URL resource = MockResponseService.class.getResource("style.css");
+        if (resource != null) {
+            scene.getStylesheets().add(resource.toExternalForm());
+        }
+        stage.setScene(scene);
+        return stage;
+    }
+
+    private static Integer parseTimeout(String text, String fieldName, Stage stage) {
+        try {
+            int timeout = Integer.parseInt(text == null ? "" : text.trim());
+            if (timeout < 0) {
+                throw new NumberFormatException();
+            }
+            return timeout;
+        } catch (NumberFormatException e) {
+            WindowUtil.showAlert(Alert.AlertType.WARNING, "输入错误", "参数校验失败", fieldName + "必须是大于等于 0 的整数", stage, ButtonType.OK);
+            return null;
+        }
+    }
+
+    private static Double parseSuccessRate(String text, String fieldName, Stage stage) {
+        try {
+            double rate = Double.parseDouble(text == null ? "" : text.trim());
+            if (rate < 0.0D || rate > 1.0D) {
+                throw new NumberFormatException();
+            }
+            return rate;
+        } catch (NumberFormatException e) {
+            WindowUtil.showAlert(Alert.AlertType.WARNING, "输入错误", "参数校验失败", fieldName + "必须是 0 到 1 之间的小数", stage, ButtonType.OK);
+            return null;
+        }
+    }
+
+    private static List<HostTimeoutRow> buildHostRows(TcpDeviceModel model) {
+        List<String> hosts = model.getMockResponses()
+                                  .stream()
+                                  .map(MockResponseModel::getSlaveId)
+                                  .filter(v -> v != null && !v.isBlank())
+                                  .map(String::trim)
+                                  .distinct()
+                                  .sorted(Comparator.comparingInt(MockResponseService::parseHostSortValue))
+                                  .toList();
+        List<HostTimeoutRow> rows = new ArrayList<>(hosts.size());
+        for (String host : hosts) {
+            rows.add(new HostTimeoutRow(host,
+                                        model.getHostTimeoutMs().getOrDefault(host, 0),
+                                        model.getHostSuccessRates().getOrDefault(host, 1.0D)));
+        }
+        return rows;
+    }
+
+    private static int parseHostSortValue(String host) {
+        try {
+            return Integer.parseInt(host, 16);
+        } catch (NumberFormatException ignored) {
+            try {
+                return Integer.parseInt(host);
+            } catch (NumberFormatException ignoredAgain) {
+                return Integer.MAX_VALUE;
+            }
+        }
+    }
+
+    private static class HostTimeoutRow {
+        private final javafx.beans.property.StringProperty  host        = new javafx.beans.property.SimpleStringProperty();
+        private final javafx.beans.property.IntegerProperty timeout     = new javafx.beans.property.SimpleIntegerProperty();
+        private final javafx.beans.property.DoubleProperty  successRate = new javafx.beans.property.SimpleDoubleProperty(1.0D);
+
+        HostTimeoutRow(String host, int timeout, double successRate) {
+            this.host.set(host);
+            this.timeout.set(Math.max(timeout, 0));
+            this.successRate.set(Math.clamp(successRate, 0.0D, 1.0D));
+        }
+
+        public String getHost()                                           {return host.get();}
+
+        public javafx.beans.property.StringProperty hostProperty()        {return host;}
+
+        public int getTimeout()                                           {return timeout.get();}
+
+        public void setTimeout(int timeout)                               {this.timeout.set(Math.max(timeout, 0));}
+
+        public javafx.beans.property.IntegerProperty timeoutProperty()    {return timeout;}
+
+        public double getSuccessRate()                                    {return successRate.get();}
+
+        public void setSuccessRate(double successRate)                    {this.successRate.set(Math.max(0.0D, Math.min(successRate, 1.0D)));}
+
+        public javafx.beans.property.DoubleProperty successRateProperty() {return successRate;}
+    }
 }

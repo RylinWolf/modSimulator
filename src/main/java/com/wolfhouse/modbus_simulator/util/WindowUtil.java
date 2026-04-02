@@ -147,14 +147,15 @@ public class WindowUtil {
      * @param scene 与窗口关联的场景对象，用于监听键盘事件。
      */
     public static void setupDialogCloseShortcuts(Stage stage, Scene scene) {
-        scene.setOnKeyPressed(event -> {
+        scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             if (event.getCode() == KeyCode.ESCAPE) {
                 stage.close();
                 return;
             }
             // 兼容 Cmd+W (Mac) 和 Alt+F4
             KeyCombination closeCombo = new KeyCodeCombination(KeyCode.W, KeyCombination.SHORTCUT_DOWN);
-            if (closeCombo.match(event)) {
+            KeyCombination altF4Combo = new KeyCodeCombination(KeyCode.F4, KeyCombination.ALT_DOWN);
+            if (closeCombo.match(event) || altF4Combo.match(event)) {
                 stage.close();
             }
         });
