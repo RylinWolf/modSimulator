@@ -90,16 +90,16 @@ public class LogUtil {
 
     private static void log(String level, String format, Object... args) {
         String message = formatMessage(format, args);
-
+        // 获取调用者信息
+        String methodName = getCallingMethodName();
+        
         if (!initialized || currentLogFile == null) {
             String threadName = Thread.currentThread().getName();
             String time       = LocalDateTime.now().format(LOG_TIME_FORMATTER);
-            System.out.printf("[%s]-[%s]-[%s]: %s%n", time, threadName, level, message);
+            System.out.printf("[%s]-[%s]-[%s]-[%s]: %s%n",
+                              time, threadName, level, methodName, message);
             return;
         }
-
-        // 获取调用者信息
-        String methodName = getCallingMethodName();
 
         String threadName = Thread.currentThread().getName();
         String time       = LocalDateTime.now().format(LOG_TIME_FORMATTER);
